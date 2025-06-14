@@ -1,13 +1,17 @@
 {
     "mcpServers": {
       "mcp-greet": {
+        "disabled": false,
         "timeout": 60,
-        "command": ".venv/bin/python",
+        "type": "stdio",
+        "command": "uv",
         "args": [
+          "--directory", 
+          "/home/user/mcp-servers/mcp-greet",
+          "run",
+          "python",
           "server.py"
-        ],
-        "transportType": "stdio",
-        "disabled": false
+        ]
       }
     }
 }

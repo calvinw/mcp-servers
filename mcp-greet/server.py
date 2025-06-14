@@ -12,12 +12,7 @@ def add_numbers(a: float = 10.0, b: float = 5.0) -> dict:
 def greet(name: str) -> str:
     """Greet someone by name."""
     return f"Hello, {name}! Nice to meet you."
-
-@mcp.tool()
-def greet_warmly(name: str) -> str:
-    """Greet someone by name."""
-    return f"Hello, {name}! So great to see you."
-
+    
 @mcp.tool()
 def get_sample_markdown_table() -> str:
     """Markdown table."""

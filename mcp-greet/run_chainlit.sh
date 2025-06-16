@@ -4,6 +4,8 @@ PORT=${PORT:-8080}
 echo "🚀 Starting Chainlit app on port $PORT..."
 cd /home/user/mcp-servers/mcp-greet
 
+uv sync
+
 # Copy the packaged config if it doesn't exist locally
 if [ ! -d ".chainlit" ]; then
     echo "📋 Copying packaged .chainlit config..."

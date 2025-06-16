@@ -14,9 +14,16 @@ def greet(name: str) -> str:
     return f"Hello, {name}! Nice to meet you."
     
 @mcp.tool()
-def get_sample_markdown_table() -> str:
-    """Markdown table."""
+def get_some_sample_markdown() -> str:
+    """Some sample markdown."""
     return f"""
+    This is *Italic*   
+    This is **Bold**  
+    This is some LaTeX $x=434$  
+
+    - First 
+    - Second 
+
     | Header 1 | Header 2 |
     |----------|----------|
     | Cell 1   | Cell 2   |

@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 .chainlit/
+user_settings/
 
 # C extensions
 *.so

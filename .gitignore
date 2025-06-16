@@ -5,6 +5,8 @@ __pycache__/
 
 .chainlit/
 user_settings/
+app.py
+chainlit.md
 
 # C extensions
 *.so

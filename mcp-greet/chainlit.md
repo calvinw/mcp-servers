@@ -1,3 +1,0 @@
-# Chainlit MCP Client 
-
-

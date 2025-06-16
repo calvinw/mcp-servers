@@ -25,16 +25,16 @@
     previews = {
       enable = true;
       previews = {
-#         web = {
-#           # Example: run "npm run dev" with PORT set to IDX's defined port for previews,
-#           # and show it in IDX's web preview panel
-#           command = ["sh" "-c" "cd chainlit-mcp-client && uv run chainlit run app.py --host 0.0.0.0 --port \"$PORT\""];
-#           manager = "web";
-#           env = {
-#             # Environment variables to set for your server
-#             PORT = "$PORT";
-#           };
-#         };
+         web = {
+           # Example: run "npm run dev" with PORT set to IDX's defined port for previews,
+           # and show it in IDX's web preview panel
+           command = ["sh" "-c" "mcp-greet/run_chainlit.sh"];
+           manager = "web";
+           env = {
+             # Environment variables to set for your server
+             PORT = "$PORT";
+           };
+         };
       };
     };
     # Workspace lifecycle hooks

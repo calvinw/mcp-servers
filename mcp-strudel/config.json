@@ -1,0 +1,17 @@
+{
+    "mcpServers": {
+      "mcp-strudel": {
+        "disabled": false,
+        "timeout": 60,
+        "type": "stdio",
+        "command": "uv",
+        "args": [
+          "--directory", 
+          "/home/user/mcp-servers/mcp-strudel",
+          "run",
+          "python",
+          "server.py"
+        ]
+      }
+    }
+}

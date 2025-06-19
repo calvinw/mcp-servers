@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strudel MCP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col p-6">
+    <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">Strudel MCP</h1>
+        <div class="flex items-center gap-2 text-sm">
+            <div id="statusDot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+            <span id="statusText" class="text-gray-700">Connecting to MCP server...</span>
+        </div>
+    </div>
+    
+    <div class="flex-1">
+        <div id="helpText" class="text-gray-600 text-sm mb-4 hidden">Please hit Stop and then Play to initialize audio</div>
+        <div class="flex flex-wrap gap-2 mb-8">
+            <button onclick="playCurrentCode()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg">
+                PLAY
+            </button>
+            <button onclick="stopAll()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg">
+                STOP
+            </button>
+            <button onclick="playPattern('kick')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Four-on-the-floor kick pattern">
+                KICK
+            </button>
+            <button onclick="playPattern('snare')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Backbeat snare on 2 and 4">
+                SNARE
+            </button>
+            <button onclick="playPattern('hihat')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Steady hi-hat groove">
+                HI-HAT
+            </button>
+            <button onclick="playPattern('bass')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Deep filtered bass line">
+                BASS
+            </button>
+            <button onclick="playPattern('melody')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Simple ascending melody">
+                MELODY
+            </button>
+            <button onclick="playPattern('complex')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Layered bass, melody and drums">
+                COMPLEX
+            </button>
+            <button onclick="playPattern('ambient')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Spacey ambient texture">
+                AMBIENT
+            </button>
+            <button onclick="playPattern('arpeggio')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Filtered square wave arpeggio">
+                ARPEGGIO
+            </button>
+            <button onclick="playPattern('polyrhythm')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Complex polyrhythmic drums">
+                POLYRHYTHM
+            </button>
+            <button onclick="playPattern('chord')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Simple piano chord progression">
+                CHORD
+            </button>
+        </div>
+        
+        <div class="mb-8">
+            <script src="https://unpkg.com/@strudel/repl@1.0.2"></script>
+            <strudel-editor id="strudelEditor" class="w-full h-8 block rounded-lg overflow-hidden shadow-lg">
+                <!--
+// Use buttons above or paste Strudel code here
+silence
+                -->
+            </strudel-editor>
+        </div>
+    </div>
+    
+    <div id="messageLog" class="bg-gray-900 text-gray-500 p-4 rounded-lg h-16 overflow-y-auto font-mono text-xs mt-auto whitespace-pre-wrap">
+        Sounds take about a minute to load...
+    </div>
+
+    <script>
+        // Pattern definitions with descriptions
+        const patterns = {
+            kick: {
+                code: 's("bd bd bd bd")',
+                description: "Four-on-the-floor kick pattern"
+            },
+            snare: {
+                code: 's("~ sd ~ sd")',
+                description: "Backbeat snare on 2 and 4"
+            },
+            hihat: {
+                code: 's("hh*4").gain(0.6)',
+                description: "Steady hi-hat groove"
+            },
+            bass: {
+                code: 'note("c2 ~ eb2 ~ f2 ~ g2 ~").s("sawtooth").lpf(800)',
+                description: "Deep filtered bass line"
+            },
+            melody: {
+                code: 'note("c4 d4 e4 f4 g4 f4 e4 d4").s("triangle").slow(2)',
+                description: "Simple ascending melody"
+            },
+            complex: {
+                code: `stack(
+  note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).slow(2),
+  note("c4 d4 eb4 f4 g4 ab4 bb4 c5").s("triangle").gain(0.7),
+  s("bd ~ bd ~").fast(1.5)
+)`,
+                description: "Layered bass, melody and drums"
+            },
+            ambient: {
+                code: 'note("c4 g4 e5 c5").s("sawtooth").slow(4).room(0.8).delay(0.5)',
+                description: "Spacey ambient texture"
+            },
+            arpeggio: {
+                code: 'note("c4 e4 g4 c5 g4 e4").fast(2).s("square").lpf(sine.range(400, 2000))',
+                description: "Filtered square wave arpeggio"
+            },
+            polyrhythm: {
+                code: 'stack(s("bd*3"), s("~ sd ~ sd ~ sd"), s("hh*8").gain(0.4))',
+                description: "Complex polyrhythmic drums"
+            },
+            chord: {
+                code: 'note("<c4 e4 g4>").s("piano").slow(2).room(0.3)',
+                description: "Simple piano chord progression"
+            }
+        };
+
+        // WebSocket connection for MCP
+        let ws = null;
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const messageLog = document.getElementById('messageLog');
+
+        function addLogEntry(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logLine = `[${timestamp}] ${message}\n`;
+            messageLog.textContent += logLine;
+            messageLog.scrollTop = messageLog.scrollHeight;
+            
+            // Keep only last 50 lines
+            const lines = messageLog.textContent.split('\n');
+            if (lines.length > 50) {
+                messageLog.textContent = lines.slice(-50).join('\n');
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const helpText = document.getElementById('helpText');
+            if (connected) {
+                statusDot.className = 'w-2 h-2 rounded-full bg-green-500';
+                statusText.textContent = 'Connected to MCP server';
+                helpText.classList.remove('hidden');
+                
+                // Hide help text after 60 seconds
+                setTimeout(() => {
+                    helpText.classList.add('hidden');
+                }, 60000);
+            } else {
+                statusDot.className = 'w-2 h-2 rounded-full bg-red-500 animate-pulse';
+                statusText.textContent = 'Disconnected from MCP server';
+                helpText.classList.add('hidden');
+            }
+        }
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws`;
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                updateConnectionStatus(true);
+                addLogEntry('WebSocket connected to MCP server', 'success');
+            };
+            
+            ws.onmessage = async function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    
+                    if (data.type === 'strudel-code') {
+                        const description = data.metadata?.description || '';
+                        const logMessage = description ? 
+                            `Received: ${description}` : 
+                            `Received: ${data.code.substring(0, 50)}...`;
+                        
+                        addLogEntry(logMessage);
+                        
+                        // Set the code and play it
+                        setCustomCode(data.code);
+                        
+                    } else if (data.type === 'strudel-stop' || data.type === 'stop') {
+                        addLogEntry('Received stop command');
+                        stopAll();
+                        
+                    } else if (data.type === 'get-current-code') {
+                        addLogEntry('Sending current editor code to MCP server');
+                        sendCurrentCodeToServer(data.request_id);
+                        
+                    } else if (data.type === 'ping') {
+                        ws.send(JSON.stringify({type: 'pong'}));
+                        
+                    } else {
+                        addLogEntry(`Unknown message type: ${data.type}`);
+                    }
+                    
+                } catch (error) {
+                    console.error('WebSocket message error:', error);
+                    addLogEntry(`Message parse error: ${error.message}`, 'error');
+                }
+            };
+            
+            ws.onclose = function() {
+                updateConnectionStatus(false);
+                addLogEntry('WebSocket disconnected, attempting to reconnect...', 'warning');
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                addLogEntry('WebSocket connection error', 'error');
+            };
+        }
+
+        // Strudel control functions
+        function playPattern(patternName) {
+            const editor = document.getElementById('strudelEditor');
+            if (!editor || !editor.editor) {
+                addLogEntry('Editor not ready yet', 'error');
+                return;
+            }
+
+            const pattern = patterns[patternName];
+            if (!pattern) {
+                addLogEntry(`Pattern not found: ${patternName}`, 'error');
+                return;
+            }
+
+            addLogEntry(`Playing ${patternName}: ${pattern.description}`);
+            setCustomCode(pattern.code);
+        }
+
+        function playCurrentCode() {
+            const editor = document.getElementById('strudelEditor');
+            if (!editor || !editor.editor) {
+                addLogEntry('Editor not ready yet', 'error');
+                return;
+            }
+
+            // Get current code from the editor
+            let currentCode = '';
+            
+            if (editor.editor.editor && editor.editor.editor.state) {
+                currentCode = editor.editor.editor.state.doc.toString();
+            } else if (editor.editor.code) {
+                currentCode = editor.editor.code;
+            }
+
+            if (!currentCode || currentCode.trim() === '') {
+                addLogEntry('No code to play', 'warning');
+                return;
+            }
+
+            addLogEntry('Playing current code');
+
+            try {
+                editor.editor.code = currentCode;
+                editor.editor.evaluate();
+                addLogEntry(' Playing current code');
+            } catch (e) {
+                addLogEntry(` Evaluation failed: ${e.message}`, 'error');
+            }
+        }
+
+        function stopAll() {
+            const editor = document.getElementById('strudelEditor');
+            if (!editor || !editor.editor) {
+                addLogEntry('Editor not ready yet', 'error');
+                return;
+            }
+
+            try {
+                editor.editor.stop();
+                addLogEntry(' Stopped all patterns');
+            } catch (e) {
+                addLogEntry(` Stop failed: ${e.message}`, 'error');
+            }
+        }
+
+        function setCustomCode(code) {
+            const editor = document.getElementById('strudelEditor');
+            if (!editor || !editor.editor) {
+                addLogEntry('Editor not ready yet', 'error');
+                return;
+            }
+
+            // Set the code
+            editor.editor.code = code;
+
+            // Update the visual editor
+            if (editor.editor.editor && editor.editor.editor.dispatch) {
+                try {
+                    const transaction = editor.editor.editor.state.update({
+                        changes: {
+                            from: 0,
+                            to: editor.editor.editor.state.doc.length,
+                            insert: code
+                        }
+                    });
+                    editor.editor.editor.dispatch(transaction);
+                } catch (e) {
+                    addLogEntry(`Visual update failed: ${e.message}`, 'warning');
+                }
+            }
+
+            // Trigger evaluation
+            try {
+                editor.editor.evaluate();
+                addLogEntry(' Pattern playing');
+            } catch (e) {
+                addLogEntry(` Evaluation failed: ${e.message}`, 'error');
+            }
+        }
+
+        function sendCurrentCodeToServer(requestId) {
+            const editor = document.getElementById('strudelEditor');
+            if (!editor || !editor.editor) {
+                addLogEntry('Editor not ready for code retrieval', 'error');
+                return;
+            }
+
+            // Get current code from the editor
+            let currentCode = '';
+            
+            if (editor.editor.editor && editor.editor.editor.state) {
+                currentCode = editor.editor.editor.state.doc.toString();
+            } else if (editor.editor.code) {
+                currentCode = editor.editor.code;
+            }
+
+            if (!currentCode || currentCode.trim() === '') {
+                currentCode = '// No code in editor';
+            }
+
+            // Send the current code back to the server
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const message = {
+                    type: 'current-code-response',
+                    request_id: requestId,
+                    code: currentCode,
+                    timestamp: Date.now()
+                };
+                
+                ws.send(JSON.stringify(message));
+                addLogEntry(`Sent current code to MCP server (${currentCode.length} chars)`);
+                console.log('Current editor code:', currentCode);
+            } else {
+                addLogEntry('WebSocket not connected - cannot send code', 'error');
+            }
+        }
+
+        // Global API for MCP compatibility
+        window.strudel = {
+            evaluate: async function(code) {
+                setCustomCode(code);
+                return Promise.resolve();
+            },
+            stop: async function() {
+                stopAll();
+                return Promise.resolve();
+            }
+        };
+
+        // Enhanced API
+        window.strudelControl = {
+            playPattern,
+            playCurrentCode,
+            stopAll,
+            setCustomCode
+        };
+
+        // Initialize WebSocket connection when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            addLogEntry('Strudel MCP interface ready');
+            connectWebSocket();
+            
+            // Load starter pattern after a brief delay
+            setTimeout(() => {
+                const starterCode = `stack(
+  note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).slow(2),
+  note("c4 d4 eb4 f4 g4 ab4 bb4 c5").s("triangle").gain(0.7),
+  s("bd ~ bd ~").fast(1.5)
+)`;
+                setCustomCode(starterCode);
+                addLogEntry('Loaded starter pattern');
+                
+            }, 1000);
+        });
+
+        console.log(' Strudel MCP Live Coding ready!');
+    </script>
+</body>
+</html>

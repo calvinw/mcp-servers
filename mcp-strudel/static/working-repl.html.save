@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Working Strudel REPL with Pattern Buttons</title>
+    <style>
+      body {
+        margin: 0;
+        background: #222;
+        font-family: Arial, sans-serif;
+        color: white;
+      }
+      
+      .controls {
+        position: absolute;
+        top: 80px;
+        right: 20px;
+        z-index: 100;
+        background: rgba(0,0,0,0.9);
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #555;
+        max-width: 200px;
+      }
+      
+      .controls button {
+        background: #4CAF50;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        margin: 3px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      
+      .controls button:hover {
+        background: #45a049;
+      }
+      
+      .controls button.drums { background: #ff6b6b; }
+      .controls button.melody { background: #4ecdc4; }
+      .controls button.complex { background: #ffe66d; color: #333; }
+      
+      .main-content {
+        display: grid;
+        height: 100vh;
+        grid-template-rows: 60px auto;
+        padding-top: 0;
+      }
+      
+      .header-bar {
+        display: flex;
+        width: 100%;
+        height: 60px;
+        background: #333;
+        border-bottom: 2px solid #555;
+      }
+      
+      #start {
+        flex: 1;
+        height: 60px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        border-right: 1px solid #555;
+      }
+      
+      #start:hover {
+        background: #45a049;
+      }
+      
+      #headerStop {
+        width: 120px;
+        height: 60px;
+        background: #ff6b6b;
+        color: white;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      
+      #headerStop:hover {
+        background: #ff5252;
+      }
+      
+      textarea {
+        font-size: 1.5em;
+        border: 0;
+        color: white;
+        background: transparent;
+        outline: none;
+        padding: 20px;
+        padding-right: 240px; /* Make room for pattern buttons */
+        font-family: 'Courier New', monospace;
+        resize: none;
+      }
+      
+      .status {
+        position: absolute;
+        top: 10px;
+        right: 20px;
+        z-index: 100;
+        background: rgba(0,0,0,0.7);
+        padding: 5px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="controls">
+      <div style="margin-bottom: 5px; font-size: 12px;">🎵 Patterns:</div>
+      <button onclick="setPattern('basic')" class="melody">🎹 Basic</button>
+      <button onclick="setPattern('drums')" class="drums">🥁 Drums</button>
+      <button onclick="setPattern('melody')" class="melody">🎼 Melody</button>
+      <button onclick="setPattern('complex')" class="complex">🔥 Complex</button>
+      <br>
+      <button onclick="setPattern('custom')">✨ Custom</button>
+      <button onclick="stopAll()" style="background: #ff6b6b;">🛑 Stop</button>
+    </div>
+    
+    <div class="status" id="status">Loading...</div>
+    
+    <div class="main-content">
+      <div class="header-bar">
+        <button id="start">▶ PLAY / EVALUATE</button>
+        <button id="headerStop" onclick="stopAll()">⏹ STOP</button>
+      </div>
+      <textarea
+        id="text"
+        spellcheck="false"
+        placeholder="Loading Strudel patterns..."
+      ></textarea>
+    </div>
+    
+    <div id="output"></div>
+    
+    <script type="module">
+      import { controls, repl, evalScope } from 'https://cdn.skypack.dev/@strudel/core@0.11.0';
+      import { mini } from 'https://cdn.skypack.dev/@strudel/mini@0.11.0';
+      import { transpiler } from 'https://cdn.skypack.dev/@strudel/transpiler@0.11.0';
+      import {
+        getAudioContext,
+        webaudioOutput,
+        initAudioOnFirstClick,
+        registerSynthSounds,
+      } from 'https://cdn.skypack.dev/@strudel/webaudio@0.11.0';
+
+      // Pattern library
+      const patterns = {
+        basic: `samples('github:tidalcycles/dirt-samples')
+s("bd sn hh sn").slow(2)`,
+        
+        drums: `samples('github:tidalcycles/dirt-samples')
+stack(
+  s("bd bd ~ bd"),
+  s("~ sn ~ sn"), 
+  s("hh*8").gain(0.3)
+)`,
+        
+        melody: `samples('github:tidalcycles/dirt-samples')
+note("c4 d4 e4 f4 g4 a4 b4 c5")
+.slow(2)
+.s("bleep")
+.room(0.3)`,
+        
+        complex: `samples('github:tidalcycles/dirt-samples')
+stack(
+  note("c2 [eb2 g2] bb1 f2").slow(4).s("sawtooth").lpf(400),
+  note("<c4 eb4 g4 bb4>*4").s("bleep").gain(0.6),
+  s("bd ~ bd ~").fast(2),
+  s("~ sn ~ sn")
+)`,
+        
+        custom: `samples('github:tidalcycles/dirt-samples')
+s("cp bd ~ sn").fast(2).room(0.5)`
+      };
+
+      const ctx = getAudioContext();
+      const input = document.getElementById('text');
+      const statusEl = document.getElementById('status');
+      
+      // Set initial pattern
+      input.value = patterns.basic;
+
+      const loadModules = evalScope(
+        controls,
+        import('https://cdn.skypack.dev/@strudel/core@0.11.0'),
+        import('https://cdn.skypack.dev/@strudel/mini@0.11.0'),
+        import('https://cdn.skypack.dev/@strudel/tonal@0.11.0'),
+        import('https://cdn.skypack.dev/@strudel/webaudio@0.11.0'),
+      );
+
+      const initAudio = Promise.all([initAudioOnFirstClick(), registerSynthSounds()]);
+
+      const { evaluate, hush } = repl({
+        defaultOutput: webaudioOutput,
+        getTime: () => ctx.currentTime,
+        transpiler,
+      });
+      
+      // Make hush available globally for debugging
+      window.strudelHush = hush;
+      
+      // Play button
+      document.getElementById('start').addEventListener('click', async () => {
+        try {
+          statusEl.textContent = 'Starting...';
+          await loadModules;
+          await initAudio;
+          await ctx.resume();
+          evaluate(input.value);
+          statusEl.textContent = '🎵 Playing';
+          console.log('✅ Pattern playing');
+        } catch (error) {
+          statusEl.textContent = '❌ Error';
+          console.error('❌ Error:', error);
+        }
+      });
+
+      // Pattern functions (global)
+      window.setPattern = async function(patternName) {
+        const code = patterns[patternName];
+        if (code) {
+          input.value = code;
+          statusEl.textContent = `Loading ${patternName}...`;
+          console.log(`📝 Loaded pattern: ${patternName}`);
+          
+          // Auto-play
+          try {
+            await loadModules;
+            await initAudio;
+            await ctx.resume();
+            evaluate(code);
+            statusEl.textContent = `🎵 Playing: ${patternName}`;
+            console.log(`🎵 Auto-playing: ${patternName}`);
+          } catch (error) {
+            statusEl.textContent = '❌ Error';
+            console.error('❌ Auto-play error:', error);
+          }
+        }
+      };
+      
+      window.stopAll = function() {
+        try {
+          console.log('🛑 Attempting to stop with hush()');
+          console.log('hush function:', hush);
+          console.log('hush type:', typeof hush);
+          
+          if (typeof hush === 'function') {
+            hush();
+            statusEl.textContent = '🛑 Stopped';
+            console.log('🛑 All patterns stopped with hush()');
+          } else {
+            // Try alternative stop methods
+            if (window.strudelHush) {
+              window.strudelHush();
+              console.log('🛑 Used global strudelHush');
+            } else {
+              // Last resort: evaluate silence
+              evaluate('silence');
+              console.log('🛑 Used silence pattern');
+            }
+            statusEl.textContent = '🛑 Stopped (alternative method)';
+          }
+        } catch (error) {
+          statusEl.textContent = '❌ Stop Error';
+          console.error('❌ Stop error:', error);
+        }
+      };
+
+      // Initialize
+      loadModules.then(() => {
+        statusEl.textContent = '✅ Ready - Click patterns!';
+        console.log('🌀 Strudel REPL ready!');
+      });
+    </script>
+  </body>
+</html>

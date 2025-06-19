@@ -8,7 +8,11 @@ user_settings/
 app.py
 chainlit.md
 mc-strudel/temp-strudel/
-mc-strudel/static/examples
+mc-strudel/static/examples/
+examples/
+temp-strudel/
+static/examples/
+*working/
 
 # C extensions
 *.so

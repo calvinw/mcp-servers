@@ -9,7 +9,7 @@ def add_numbers(a: float = 10.0, b: float = 5.0) -> dict:
     return {"a": a, "b": b, "result": a + b}
 
 @mcp.tool()
-def greet(name: str) -> str:
+def greet(name: str = "Calvin") -> str:
     """Greet someone by name."""
     return f"Hello, {name}! Nice to meet you."
     

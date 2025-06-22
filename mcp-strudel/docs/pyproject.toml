@@ -1,0 +1,17 @@
+[project]
+name = "website-scraper"
+version = "0.1.0"
+description = "Website to markdown scraper and Strudel examples extractor"
+dependencies = [
+    "requests",
+    "beautifulsoup4",
+    "html2text"
+]
+
+[project.scripts]
+scrape-website = "website_scraper:main"
+extract-strudel = "strudel_extractor:main"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

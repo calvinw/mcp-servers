@@ -13,6 +13,7 @@ examples/
 temp-strudel/
 static/examples/
 *working/
+mcp-strudel/docs/strudel/
 
 # C extensions
 *.so

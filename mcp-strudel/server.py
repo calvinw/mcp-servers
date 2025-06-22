@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 import json
 import uuid
 import time
+from pathlib import Path
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -19,6 +20,17 @@ websocket_manager = None
 
 # Global dictionary to store pending code requests
 pending_code_requests = {}
+
+# Initialize Strudel documentation system
+try:
+    import sys
+    sys.path.append(str(Path(__file__).parent / "llm_docs"))
+    from strudel_docs_system_v2 import StrudelDocsSystemV2
+    docs_system = StrudelDocsSystemV2()
+    logger.info("Strudel documentation system v2 (faithful librarian) loaded successfully")
+except Exception as e:
+    docs_system = None
+    logger.warning(f"Could not load Strudel documentation system: {e}")
 
 def set_websocket_manager(manager):
     """Set the WebSocket manager from sse_server.py"""
@@ -216,84 +228,236 @@ async def get_currently_playing_code() -> str:
         logger.error(f"Error requesting current code: {e}")
         return f"Error requesting current code: {str(e)}"
 
-# Pattern examples database
-EXAMPLES = {
-    "kick": {
-        "code": 's("bd bd bd bd")',
-        "description": "Four-on-the-floor kick pattern"
-    },
-    "snare": {
-        "code": 's("~ sd ~ sd")',
-        "description": "Backbeat snare on 2 and 4"
-    },
-    "hihat": {
-        "code": 's("hh*4").gain(0.6)',
-        "description": "Steady hi-hat groove"
-    },
-    "bass": {
-        "code": 'note("c2 ~ eb2 ~ f2 ~ g2 ~").s("sawtooth").lpf(800)',
-        "description": "Deep filtered bass line"
-    },
-    "melody": {
-        "code": 'note("c4 d4 e4 f4 g4 f4 e4 d4").s("triangle").slow(2)',
-        "description": "Simple ascending melody"
-    },
-    "complex": {
-        "code": '''stack(
-  note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).slow(2),
-  note("c4 d4 eb4 f4 g4 ab4 bb4 c5").s("triangle").gain(0.7),
-  s("bd ~ bd ~").fast(1.5)
-)''',
-        "description": "Layered bass, melody and drums"
-    },
-    "ambient": {
-        "code": 'note("c4 g4 e5 c5").s("sawtooth").slow(4).room(0.8).delay(0.5)',
-        "description": "Spacey ambient texture"
-    },
-    "arpeggio": {
-        "code": 'note("c4 e4 g4 c5 g4 e4").fast(2).s("square").lpf(sine.range(400, 2000))',
-        "description": "Filtered square wave arpeggio"
-    },
-    "polyrhythm": {
-        "code": 'stack(s("bd*3"), s("~ sd ~ sd ~ sd"), s("hh*8").gain(0.4))',
-        "description": "Complex polyrhythmic drums"
-    },
-    "chord": {
-        "code": 'note("<c4 e4 g4>").s("piano").slow(2).room(0.3)',
-        "description": "Simple piano chord progression"
-    }
-}
-
+# Documentation tools - Faithful librarian approach
 @mcp.tool()
-async def get_example_names() -> str:
+async def get_strudel_docs(page: str = "", outline: str = "", format: str = "", related_to: str = "") -> str:
     """
-    Get list of all available example pattern names
-    
-    Returns:
-        List of available pattern names with descriptions
-    """
-    result = "Available example patterns:\n\n"
-    for name, data in EXAMPLES.items():
-        result += f"- {name}: {data['description']}\n"
-    return result
-
-@mcp.tool()
-async def get_example_code(name: str = "complex") -> str:
-    """
-    Get the code for a specific example pattern
+    Get Strudel documentation - faithful to the original website structure.
     
     Args:
-        name: Name of the pattern (use get_example_names to see available options). Defaults to "complex"
+        page: Specific page path (e.g. "learn/samples", "workshop/first-sounds")
+        outline: Show site structure ("true" for all, or category like "learn")
+        format: "complete" for all pages concatenated, "printable" for organized reference
+        related_to: Find pages related to a topic with descriptions
+        
+    Returns:
+        Complete pages exactly as written, or site navigation
+    """
+    if not docs_system:
+        return "Documentation system not available. Please check if docs are properly installed."
+    
+    try:
+        if page:
+            return docs_system.get_complete_page(page)
+        elif outline:
+            if outline.lower() == "true":
+                return docs_system.get_site_outline()
+            else:
+                return docs_system.get_site_outline(outline)
+        elif format == "complete" or format == "printable":
+            return docs_system.get_all_pages_concatenated()
+        elif related_to:
+            return docs_system.find_related_pages(related_to)
+        else:
+            # Default: show site outline
+            return docs_system.get_site_outline()
+    except Exception as e:
+        logger.error(f"Error accessing documentation: {e}")
+        return f"Error accessing documentation: {str(e)}"
+
+@mcp.tool()
+async def get_strudel_examples(example_type: str = "all", function: str = "", concept: str = "", difficulty: str = "") -> str:
+    """
+    Get curated Strudel code examples from across all documentation pages.
+    This is where the MCP adds value - collecting examples by theme.
+    
+    Args:
+        example_type: Type of examples (drum_patterns, melodies, effects_chains, basic_patterns, polyrhythm)
+        function: Get all examples using a specific function (e.g. "note", "lpf", "delay")
+        concept: Get examples for a concept (drums, timing, effects, chords, patterns, bass, melody)
+        difficulty: Get examples by level (beginner, intermediate, advanced)
+        
+    Returns:
+        Curated code examples with source page attribution
+    """
+    if not docs_system:
+        return "Documentation system not available. Please check if docs are properly installed."
+    
+    try:
+        return docs_system.get_curated_examples(example_type, function, concept, difficulty)
+    except Exception as e:
+        logger.error(f"Error getting examples: {e}")
+        return f"Error getting examples: {str(e)}"
+
+@mcp.tool()
+async def get_strudel_page_info(topic: str) -> str:
+    """
+    Find documentation pages related to a topic with navigation help.
+    
+    Args:
+        topic: What you're looking for (e.g. "samples", "timing", "effects")
+        
+    Returns:
+        Related page paths with descriptions and how to read them
+    """
+    if not docs_system:
+        return "Documentation system not available."
+    
+    try:
+        return docs_system.find_related_pages(topic)
+    except Exception as e:
+        logger.error(f"Error finding related pages: {e}")
+        return f"Error finding related pages: {str(e)}"
+
+@mcp.tool()
+async def search_strudel_functions(query: str, limit: int = 10) -> str:
+    """
+    Search for Strudel functions by name or description.
+    
+    Args:
+        query: Search term (function name, keyword, or concept)
+        limit: Maximum number of results to return (default 10)
+        
+    Returns:
+        Matching functions with descriptions and examples
+    """
+    if not docs_system:
+        return "Documentation system not available."
+    
+    try:
+        return docs_system.search_functions(query, limit)
+    except Exception as e:
+        logger.error(f"Error searching functions: {e}")
+        return f"Error searching functions: {str(e)}"
+
+@mcp.tool()
+async def search_strudel_instruments(query: str, limit: int = 15) -> str:
+    """
+    Search for Strudel instrument samples by name or category.
+    
+    Args:
+        query: Search term (instrument name, category like 'percussion', 'piano', etc.)
+        limit: Maximum number of results to return (default 15)
+        
+    Returns:
+        Matching instrument samples with variations and usage examples
+    """
+    if not docs_system:
+        return "Documentation system not available."
+    
+    try:
+        return docs_system.search_instrument_samples(query, limit)
+    except Exception as e:
+        logger.error(f"Error searching instrument samples: {e}")
+        return f"Error searching instrument samples: {str(e)}"
+
+@mcp.tool()
+async def search_strudel_synths(query: str, limit: int = 10) -> str:
+    """
+    Search for Strudel synthesizers by name or category.
+    
+    Args:
+        query: Search term (synth name, category like 'waveform', 'noise', or keywords)
+        limit: Maximum number of results to return (default 10)
+        
+    Returns:
+        Matching synthesizers with descriptions and usage examples
+    """
+    if not docs_system:
+        return "Documentation system not available."
+    
+    try:
+        return docs_system.search_synths(query, limit)
+    except Exception as e:
+        logger.error(f"Error searching synthesizers: {e}")
+        return f"Error searching synthesizers: {str(e)}"
+
+@mcp.tool()
+async def search_strudel_gm_instruments(query: str, limit: int = 15) -> str:
+    """
+    Search for General MIDI instruments by name or category.
+    
+    Args:
+        query: Search term (instrument name, category like 'brass', 'strings', etc.)
+        limit: Maximum number of results to return (default 15)
+        
+    Returns:
+        Matching GM instruments with variations and usage examples
+    """
+    if not docs_system:
+        return "Documentation system not available."
+    
+    try:
+        return docs_system.search_gm_instruments(query, limit)
+    except Exception as e:
+        logger.error(f"Error searching GM instruments: {e}")
+        return f"Error searching GM instruments: {str(e)}"
+
+@mcp.tool()
+async def search_strudel_drum_machines(query: str, limit: int = 15) -> str:
+    """
+    Search for classic drum machine samples by name, machine model, or drum type.
+    
+    Args:
+        query: Search term (machine name like 'tr808', 'tr909', drum type like 'kick', 'snare')
+        limit: Maximum number of results to return (default 15)
+        
+    Returns:
+        Matching drum machine samples with variations and usage examples
+    """
+    if not docs_system:
+        return "Documentation system not available."
+    
+    try:
+        return docs_system.search_drum_machines(query, limit)
+    except Exception as e:
+        logger.error(f"Error searching drum machines: {e}")
+        return f"Error searching drum machines: {str(e)}"
+
+@mcp.tool()
+async def get_strudel_quick_reference() -> str:
+    """
+    Get a quick reference guide for common Strudel patterns and functions.
     
     Returns:
-        The code for the pattern, or error if not found
+        Quick reference guide with essential Strudel syntax
     """
-    if name not in EXAMPLES:
-        available = ", ".join(EXAMPLES.keys())
-        return f"Unknown pattern '{name}'. Available patterns: {available}"
-    
-    example = EXAMPLES[name]
-    return f"Pattern: {name}\nDescription: {example['description']}\n\nCode:\n{example['code']}"
+    return """# Strudel Quick Reference
+
+## Basic Patterns
+- `s("bd sd hh cp")` - Play samples (bass drum, snare, hi-hat, clap)
+- `note("c d e f")` - Play notes
+- `note("c3 e3 g3")` - Play chord (C major)
+
+## Timing
+- `.slow(2)` - Half speed
+- `.fast(2)` - Double speed  
+- `*4` - Repeat 4 times per cycle
+- `/2` - Every other cycle
+
+## Structure  
+- `stack(pattern1, pattern2)` - Layer patterns
+- `"<a b c>"` - Sequence through values
+- `"a [b c] d"` - Subdivision (b and c share one beat)
+- `"a ~ b ~"` - Rests (~)
+
+## Effects
+- `.gain(0.5)` - Volume
+- `.lpf(800)` - Low-pass filter
+- `.delay(0.3)` - Echo
+- `.room(0.5)` - Reverb
+- `.pan(0.5)` - Stereo position
+
+## Synths
+- `.s("sawtooth")` - Waveform synth
+- `.s("piano")` - Piano sound
+- `.s("808")` - 808 drum machine
+
+## Examples
+- Kick: `s("bd ~ bd ~")`
+- Bass: `note("c2 ~ eb2 ~").s("sawtooth").lpf(400)`
+- Melody: `note("c4 d4 e4 f4").s("triangle")`
+"""
 
 if __name__ == "__main__":
     # Run the MCP server in stdio mode

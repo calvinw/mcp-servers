@@ -25,4 +25,4 @@ This project is an example of an MCP server.
     A deployed version is here:
     Type: SSE  
     Name: mcp-greet  
-    ServerURL: https://mcp-greet-5ea4aa63d7e9.herokuapp.com/sse
+    ServerURL: https://mcp-greet-121045565852.us-central1.run.app/sse

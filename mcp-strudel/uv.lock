@@ -2,6 +2,12 @@ version = 1
 revision = 2
 requires-python = ">=3.13"
 
+[manifest]
+members = [
+    "mcp-strudel",
+    "website-scraper",
+]
+
 [[package]]
 name = "aiofiles"
 version = "24.1.0"
@@ -146,6 +152,19 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/47/d7/5bbeb12c44d7c4f2fb5b56abce497eb5ed9f34d85701de869acedd602619/backoff-2.2.1.tar.gz", hash = "sha256:03f829f5bb1923180821643f8753b0502c3b682293992485b0eef2807afa5cba", size = 17001, upload-time = "2022-10-05T19:19:32.061Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/df/73/b6e24bd22e6720ca8ee9a85a0c4a2971af8497d8f3193fa05390cbd46e09/backoff-2.2.1-py3-none-any.whl", hash = "sha256:63579f9a0628e06278f7e47b7d7d5b6ce20dc65c5e96a6f3ca99a6adca0396e8", size = 15148, upload-time = "2022-10-05T19:19:30.546Z" },
+]
+
+[[package]]
+name = "beautifulsoup4"
+version = "4.13.4"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "soupsieve" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/e4/0c4c39e18fd76d6a628d4dd8da40543d136ce2d1752bd6eeeab0791f4d6b/beautifulsoup4-4.13.4.tar.gz", hash = "sha256:dbb3c4e1ceae6aefebdaf2423247260cd062430a410e38c66f2baa50a8437195", size = 621067, upload-time = "2025-04-15T17:05:13.836Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/50/cd/30110dc0ffcf3b131156077b90e9f60ed75711223f306da4db08eff8403b/beautifulsoup4-4.13.4-py3-none-any.whl", hash = "sha256:9bbbb14bfde9d79f38b8cd5f8c7c85f4b8f2523190ebed90e950a8dea4cb1c4b", size = 187285, upload-time = "2025-04-15T17:05:12.221Z" },
 ]
 
 [[package]]
@@ -518,6 +537,15 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/8b/4b/224340bb1d5c63b6e03e04095b4e42230848454bf4293c45cd7bdaa0c208/hf_xet-1.1.4-cp37-abi3-musllinux_1_2_aarch64.whl", hash = "sha256:fb2bbfa2aae0e4f0baca988e7ba8d8c1a39a25adf5317461eb7069ad00505b3e", size = 3124670, upload-time = "2025-06-16T21:20:47.688Z" },
     { url = "https://files.pythonhosted.org/packages/4a/b7/4be010014de6585401c32a04c46b09a4a842d66bd16ed549a401e973b74b/hf_xet-1.1.4-cp37-abi3-musllinux_1_2_x86_64.whl", hash = "sha256:73346ba3e2e15ea8909a26b0862b458f15b003e6277935e3fba5bf273508d698", size = 3234131, upload-time = "2025-06-16T21:20:49.535Z" },
     { url = "https://files.pythonhosted.org/packages/c2/2d/cf148d532f741fbf93f380ff038a33c1309d1e24ea629dc39d11dca08c92/hf_xet-1.1.4-cp37-abi3-win_amd64.whl", hash = "sha256:52e8f8bc2029d8b911493f43cea131ac3fa1f0dc6a13c50b593c4516f02c6fc3", size = 2695589, upload-time = "2025-06-16T21:20:53.151Z" },
+]
+
+[[package]]
+name = "html2text"
+version = "2025.4.15"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/27/e158d86ba1e82967cc2f790b0cb02030d4a8bef58e0c79a8590e9678107f/html2text-2025.4.15.tar.gz", hash = "sha256:948a645f8f0bc3abe7fd587019a2197a12436cd73d0d4908af95bfc8da337588", size = 64316, upload-time = "2025-04-15T04:02:30.045Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/1d/84/1a0f9555fd5f2b1c924ff932d99b40a0f8a6b12f6dd625e2a47f415b00ea/html2text-2025.4.15-py3-none-any.whl", hash = "sha256:00569167ffdab3d7767a4cdf589b7f57e777a5ed28d12907d8c58769ec734acc", size = 34656, upload-time = "2025-04-15T04:02:28.44Z" },
 ]
 
 [[package]]
@@ -1836,6 +1864,15 @@ wheels = [
 ]
 
 [[package]]
+name = "soupsieve"
+version = "2.7"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/3f/f4/4a80cd6ef364b2e8b65b15816a843c0980f7a5a2b4dc701fc574952aa19f/soupsieve-2.7.tar.gz", hash = "sha256:ad282f9b6926286d2ead4750552c8a6142bc4c783fd66b0293547c8fe6ae126a", size = 103418, upload-time = "2025-04-20T18:50:08.518Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e7/9c/0e6afc12c269578be5c0c1c9f4b49a8d32770a080260c333ac04cc1c832d/soupsieve-2.7-py3-none-any.whl", hash = "sha256:6e60cc5c1ffaf1cebcc12e8188320b72071e922c2e897f737cadce79ad5d30c4", size = 36677, upload-time = "2025-04-20T18:50:07.196Z" },
+]
+
+[[package]]
 name = "sse-starlette"
 version = "2.3.6"
 source = { registry = "https://pypi.org/simple" }
@@ -2111,6 +2148,23 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/91/d4/0c0fdcc4293ad1b73db54896fa0de4b37439ae4f25971b5eb1708dd04f9a/watchfiles-0.20.0-cp37-abi3-win32.whl", hash = "sha256:a03d1e6feb7966b417f43c3e3783188167fd69c2063e86bad31e62c4ea794cc5", size = 268193, upload-time = "2023-08-24T12:49:01.101Z" },
     { url = "https://files.pythonhosted.org/packages/87/79/098b1b1fcb6de16149d23283a2ab5dadce6a06b864e7a182d231f57a1f9e/watchfiles-0.20.0-cp37-abi3-win_amd64.whl", hash = "sha256:eccc8942bcdc7d638a01435d915b913255bbd66f018f1af051cd8afddb339ea3", size = 276723, upload-time = "2023-08-24T12:49:02.351Z" },
     { url = "https://files.pythonhosted.org/packages/3f/82/45dddf4f5bf8b73ba27382cebb2bb3c0ee922c7ef77d936b86276aa39dca/watchfiles-0.20.0-cp37-abi3-win_arm64.whl", hash = "sha256:b17d4176c49d207865630da5b59a91779468dd3e08692fe943064da260de2c7c", size = 265344, upload-time = "2023-08-24T12:49:04.107Z" },
+]
+
+[[package]]
+name = "website-scraper"
+version = "0.1.0"
+source = { editable = "docs" }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "html2text" },
+    { name = "requests" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "beautifulsoup4" },
+    { name = "html2text" },
+    { name = "requests" },
 ]
 
 [[package]]

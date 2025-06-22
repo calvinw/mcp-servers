@@ -17,6 +17,10 @@ COPY server.py .
 # Copy static files for the web interface
 COPY static/ ./static/
 
+# Copy documentation directories
+COPY docs_processed/ ./docs_processed/
+COPY llm_docs/ ./llm_docs/
+
 # Expose port 8080 (Cloud Run default)
 EXPOSE 8080
 

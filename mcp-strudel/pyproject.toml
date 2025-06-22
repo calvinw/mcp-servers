@@ -17,3 +17,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
 py-modules = ["server", "sse_server"]
+
+[tool.uv.workspace]
+members = [
+    "docs",
+]

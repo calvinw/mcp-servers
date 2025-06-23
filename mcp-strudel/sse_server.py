@@ -6,28 +6,48 @@ from fastapi.staticfiles import StaticFiles
 import uvicorn
 import json
 import logging
-from typing import List
+from typing import List, Dict
 from pathlib import Path
+import random
+import string
 from server import mcp, set_websocket_manager, handle_code_response
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# WebSocket connection manager
+# WebSocket connection manager with session support
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+        self.session_connections: Dict[str, WebSocket] = {}  # session_id -> websocket
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket, session_id: str = None):
         await websocket.accept()
         self.active_connections.append(websocket)
-        logger.info(f"New WebSocket connection. Total: {len(self.active_connections)}")
+        if session_id:
+            self.session_connections[session_id] = websocket
+            print(f"🔍 WebSocket connected with session_id='{session_id}'")
+            print(f"🔍 Current sessions: {list(self.session_connections.keys())}")
+            logger.info(f"New WebSocket connection with session {session_id}. Total: {len(self.active_connections)}")
+        else:
+            print(f"🔍 WebSocket connected without session_id")
+            logger.info(f"New WebSocket connection. Total: {len(self.active_connections)}")
 
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
-        logger.info(f"WebSocket disconnected. Total: {len(self.active_connections)}")
+        # Remove from session connections
+        session_to_remove = None
+        for session_id, ws in self.session_connections.items():
+            if ws == websocket:
+                session_to_remove = session_id
+                break
+        if session_to_remove:
+            del self.session_connections[session_to_remove]
+            logger.info(f"WebSocket disconnected (session {session_to_remove}). Total: {len(self.active_connections)}")
+        else:
+            logger.info(f"WebSocket disconnected. Total: {len(self.active_connections)}")
 
     async def broadcast(self, message: str):
         """Send message to all connected clients"""
@@ -42,6 +62,35 @@ class ConnectionManager:
         # Remove disconnected clients
         for connection in disconnected:
             self.disconnect(connection)
+    
+    async def send_to_session(self, session_id: str, message: str) -> bool:
+        """Send message to specific session. Returns True if successful."""
+        print(f"🔍 send_to_session called with session_id='{session_id}'")
+        print(f"🔍 Available sessions: {list(self.session_connections.keys())}")
+        
+        if session_id in self.session_connections:
+            try:
+                print(f"✅ Found session {session_id}, sending message")
+                await self.session_connections[session_id].send_text(message)
+                return True
+            except Exception as e:
+                print(f"❌ Error sending to session {session_id}: {e}")
+                logger.error(f"Error sending to session {session_id}: {e}")
+                self.disconnect(self.session_connections[session_id])
+                return False
+        else:
+            print(f"❌ Session {session_id} not found in connections")
+            return False
+    
+    def generate_session_id(self) -> str:
+        """Generate a memorable 4-character session ID (3 letters + 1 digit)"""
+        while True:
+            letters = ''.join(random.choices(string.ascii_lowercase, k=3))
+            digit = random.choice(string.digits)
+            session_id = letters + digit
+            # Ensure it's not already in use
+            if session_id not in self.session_connections:
+                return session_id
 
 # Create WebSocket manager and make it available to server.py
 manager = ConnectionManager()
@@ -77,19 +126,35 @@ app.add_api_route("/.well-known/oauth-authorization-server", oauth_metadata, met
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Add route to serve the Strudel player
-@app.get("/strudel", response_class=FileResponse)
+# Add route to serve the Strudel player with session ID
+@app.get("/strudel")
 async def serve_strudel_player():
-    """Serve the Strudel live coding interface"""
-    return FileResponse("static/index.html")
+    """Serve the Strudel live coding interface with session ID"""
+    session_id = manager.generate_session_id()
+    
+    # Read the HTML template
+    html_content = open("static/index.html", "r").read()
+    
+    # Inject session ID into the HTML
+    html_content = html_content.replace(
+        '<!-- SESSION_ID_PLACEHOLDER -->', 
+        f'<script>window.sessionId = "{session_id}";</script>'
+    )
+    
+    return HTMLResponse(content=html_content)
 
 # WebSocket endpoint for real-time communication
 @app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
+async def websocket_endpoint(websocket: WebSocket, session_id: str = None):
     """WebSocket endpoint for real-time communication with the Strudel player"""
     logger.info(f"WebSocket connection attempt from: {websocket.client}")
+    
+    # Get session_id from query parameters
+    session_id = websocket.query_params.get('session_id')
+    print(f"🔍 WebSocket endpoint called with session_id='{session_id}' from query params")
+    
     try:
-        await manager.connect(websocket)
+        await manager.connect(websocket, session_id)
         logger.info(f"WebSocket connected successfully. Total connections: {len(manager.active_connections)}")
     except Exception as e:
         logger.error(f"WebSocket connection failed: {e}")

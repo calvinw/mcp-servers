@@ -47,11 +47,13 @@ def handle_code_response(request_id: str, code: str):
         del pending_code_requests[request_id]
         logger.info(f"Resolved code request {request_id} with {len(code)} characters")
 
-async def _play_strudel_pattern_impl(code: str, description: str = "") -> str:
+async def _play_strudel_pattern_impl(code: str, description: str = "", session_id: str = "") -> str:
     """
     Internal implementation for playing Strudel patterns
     """
     global websocket_manager
+    
+    print(f"🔍 _play_strudel_pattern_impl called with session_id='{session_id}'")
     
     if not websocket_manager:
         return "❌ No WebSocket manager available. Is the web interface connected?"
@@ -59,7 +61,6 @@ async def _play_strudel_pattern_impl(code: str, description: str = "") -> str:
     try:
         metadata = {"description": description} if description else {}
         
-        # Send the code to all connected browsers
         message = {
             "type": "strudel-code",
             "code": code,
@@ -68,14 +69,17 @@ async def _play_strudel_pattern_impl(code: str, description: str = "") -> str:
             "timestamp": asyncio.get_event_loop().time()
         }
         
-        await websocket_manager.broadcast(json.dumps(message))
+        print(f"🔍 Available sessions: {list(websocket_manager.session_connections.keys())}")
         
-        connection_count = len(websocket_manager.active_connections)
-        
-        if connection_count > 0:
-            return f"🎵 Strudel pattern sent to {connection_count} connected browser(s). Pattern: {code[:50]}{'...' if len(code) > 50 else ''}"
+        # Send to specific session (now required)
+        print(f"🔍 Attempting to send to session '{session_id}'")
+        success = await websocket_manager.send_to_session(session_id, json.dumps(message))
+        if success:
+            print(f"✅ Successfully sent to session {session_id}")
+            return f"🎵 Strudel pattern sent to session {session_id.upper()}. Pattern: {code[:50]}{'...' if len(code) > 50 else ''}"
         else:
-            return "⚠️ Pattern ready, but no browsers connected. Open the web interface to hear it!"
+            print(f"❌ Failed to send to session {session_id}")
+            return f"❌ Session {session_id.upper()} not found. Make sure the browser is open with this session code."
             
     except Exception as e:
         logger.error(f"Error in play_strudel_pattern: {e}")
@@ -112,28 +116,34 @@ def _validate_strudel_code(code: str) -> tuple[bool, str]:
         return False, f"Validation error: {str(e)}"
 
 @mcp.tool()
-async def play_code(code: str = 'note("c d e f g").s("piano").slow(2)', description: str = "") -> str:
+async def play_code(session_id: str, code: str = 'note("c d e f g").s("piano").slow(2)', description: str = "") -> str:
     """
     Play live coding pattern in the connected browser
     
     Args:
+        session_id: Required session ID (e.g. "fox8") to target specific browser
         code: The code to execute. Defaults to a simple piano scale
         description: Optional description of the pattern
     
     Returns:
         Status message indicating success or failure
     """
+    print(f"🔍 play_code MCP tool called with session_id='{session_id}', code='{code[:30]}...'")
+    
     # Validate code before sending
     is_valid, validation_message = _validate_strudel_code(code)
     if not is_valid:
         return f"Invalid code: {validation_message}"
     
-    return await _play_strudel_pattern_impl(code, description)
+    return await _play_strudel_pattern_impl(code, description, session_id)
 
 @mcp.tool()
-async def stop_play() -> str:
+async def stop_play(session_id: str) -> str:
     """
-    Stop all playback in connected browsers
+    Stop playback in specific browser session
+    
+    Args:
+        session_id: Required session ID (e.g. "fox8") to target specific browser
     
     Returns:
         Status message
@@ -149,22 +159,27 @@ async def stop_play() -> str:
             "timestamp": asyncio.get_event_loop().time()
         }
         
-        await websocket_manager.broadcast(json.dumps(message))
-        
-        connection_count = len(websocket_manager.active_connections)
-        return f"Stop signal sent to {connection_count} connected browser(s)"
+        # Send to specific session (now required)
+        success = await websocket_manager.send_to_session(session_id, json.dumps(message))
+        if success:
+            return f"Stop signal sent to session {session_id.upper()}"
+        else:
+            return f"❌ Session {session_id.upper()} not found. Make sure the browser is open with this session code."
         
     except Exception as e:
         logger.error(f"Error in stop_play: {e}")
         return f"Error stopping playback: {str(e)}"
 
 @mcp.tool()
-async def get_mcp_status() -> str:
+async def get_mcp_status(session_id: str) -> str:
     """
-    Get the current status of MCP connections
+    Get the current status of specific MCP session
+    
+    Args:
+        session_id: Required session ID (e.g. "fox8") to check specific browser status
     
     Returns:
-        Status information about connected browsers
+        Status information about the specific browser session
     """
     global websocket_manager
     
@@ -172,19 +187,24 @@ async def get_mcp_status() -> str:
         return "WebSocket manager not available"
     
     connection_count = len(websocket_manager.active_connections)
+    session_count = len(websocket_manager.session_connections)
     
-    if connection_count == 0:
-        return "No browsers currently connected. Open http://localhost:8080/strudel to start jamming!"
+    # Check specific session (now required)
+    if session_id in websocket_manager.session_connections:
+        return f"✅ Session {session_id.upper()} is connected and ready for live coding!"
     else:
-        return f"{connection_count} browser(s) connected and ready for live coding!"
+        return f"❌ Session {session_id.upper()} not found. Make sure the browser is open with this session code."
 
 @mcp.tool()
-async def get_currently_playing_code() -> str:
+async def get_currently_playing_code(session_id: str) -> str:
     """
-    Get the current code from the editor in connected browsers
+    Get the current code from the editor in specific browser session
+    
+    Args:
+        session_id: Required session ID (e.g. "fox8") to get code from specific browser
     
     Returns:
-        The actual code from the editor, or error message if no browsers connected or timeout
+        The actual code from the editor, or error message if session not found or timeout
     """
     global websocket_manager, pending_code_requests
     
@@ -196,6 +216,9 @@ async def get_currently_playing_code() -> str:
     if connection_count == 0:
         return "No browsers currently connected. Open http://localhost:8080/strudel to get editor content!"
     
+    if session_id not in websocket_manager.session_connections:
+        return f"❌ Session {session_id.upper()} not found. Make sure the browser is open with this session code."
+    
     try:
         # Generate unique request ID
         request_id = str(uuid.uuid4())
@@ -204,20 +227,22 @@ async def get_currently_playing_code() -> str:
         future = asyncio.Future()
         pending_code_requests[request_id] = future
         
-        # Send request for current code to all connected browsers
+        # Send request for current code to specific session
         message = {
             "type": "get-current-code",
             "request_id": request_id,
             "timestamp": asyncio.get_event_loop().time()
         }
         
-        await websocket_manager.broadcast(json.dumps(message))
-        logger.info(f"Sent code request {request_id} to {connection_count} browser(s)")
+        success = await websocket_manager.send_to_session(session_id, json.dumps(message))
+        if not success:
+            return f"❌ Failed to send request to session {session_id.upper()}"
+        logger.info(f"Sent code request {request_id} to session {session_id}")
         
         # Wait for response with timeout
         try:
             code = await asyncio.wait_for(future, timeout=5.0)
-            return f"Current editor code:\n\n{code}"
+            return f"Current editor code from session {session_id.upper()}:\n\n{code}"
         except asyncio.TimeoutError:
             # Clean up pending request
             if request_id in pending_code_requests:

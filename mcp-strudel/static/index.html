@@ -7,9 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- SESSION_ID_PLACEHOLDER -->
 </head>
-<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col p-6">
-    <div class="flex items-center justify-between mb-8">
-        <h1 class="text-3xl font-bold text-gray-900">Strudel MCP</h1>
+<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col p-3 md:p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 md:mb-6">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mb-2 sm:mb-0">Strudel MCP</h1>
         <div class="flex items-center gap-4 text-sm">
             <div class="flex items-center gap-2">
                 <div id="statusDot" class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
@@ -18,66 +18,113 @@
         </div>
     </div>
     
-    <!-- Session ID Display -->
-    <div class="bg-blue-50 border border-blue-200 rounded p-2 mb-4">
-        <div class="text-center">
-            <h3 class="text-sm font-semibold text-blue-900 mb-2">Session Id</h3>
-            <div class="flex items-center justify-center gap-2">
-                <div class="bg-white border border-blue-300 rounded px-2 py-1">
-                    <span id="sessionPhrase" class="text-sm font-mono text-blue-800 select-all">
-                        Session Id: ----
-                    </span>
+    <!-- Top Row: Sample Buttons on Left, Session ID on Right (Session ID first on mobile) -->
+    <div class="flex flex-col lg:flex-row gap-4 mb-4">
+        <!-- Session ID Section - Shows first on mobile -->
+        <div class="w-full lg:w-80 order-1 lg:order-2">
+            <div class="bg-blue-50 border border-blue-200 rounded p-3">
+                <h3 class="text-sm md:text-base font-semibold text-blue-900 mb-2">Session ID</h3>
+                <div class="flex items-center gap-2">
+                    <div class="bg-white border border-blue-300 rounded px-2 py-1 flex-1">
+                        <span id="sessionPhrase" class="text-sm font-mono text-blue-800 select-all">
+                            Session Id: ----
+                        </span>
+                    </div>
+                    <button onclick="copySessionPhrase()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-2 rounded text-sm transition-all duration-200 hover:scale-105 touch-manipulation">
+                        Copy
+                    </button>
                 </div>
-                <button onclick="copySessionPhrase()" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-1 px-2 rounded text-sm transition-all duration-200 hover:scale-105">
-                    Copy
+                <p class="text-blue-700 text-xs md:text-sm mt-1">Share with your LLM to enable live coding</p>
+            </div>
+        </div>
+        
+        <!-- Sample Buttons Section -->
+        <div class="flex-1 order-2 lg:order-1">
+            <div class="text-xs md:text-sm text-gray-600 mb-2 font-semibold">📚 ELEMENTARY</div>
+            <div class="flex flex-wrap gap-1 md:gap-2 mb-3">
+                <button onclick="playPattern('simple_note')" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Single note">
+                    NOTE
+                </button>
+                <button onclick="playPattern('simple_drum')" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Basic drums">
+                    DRUM
+                </button>
+                <button onclick="playPattern('rest_pattern')" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Using rests">
+                    RESTS
+                </button>
+                <button onclick="playPattern('sequence')" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Note sequence">
+                    SEQUENCE
+                </button>
+                <button onclick="playPattern('parallel')" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Parallel sounds">
+                    PARALLEL
+                </button>
+                <button onclick="playPattern('speed_control')" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Speed control">
+                    SPEED
+                </button>
+                <button onclick="playPattern('sample_selection')" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Sample selection">
+                    SAMPLES
+                </button>
+                <button onclick="playPattern('basic_scale')" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Using scales">
+                    SCALE
+                </button>
+                <button onclick="playPattern('volume_control')" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Volume control">
+                    VOLUME
+                </button>
+                <button onclick="playPattern('simple_filter')" class="bg-blue-500 hover:bg-blue-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Basic filter">
+                    FILTER
                 </button>
             </div>
-            <p class="text-blue-700 text-xs mt-1">Share with your LLM to enable live coding</p>
+            
+            <div class="text-xs md:text-sm text-gray-600 mb-2 font-semibold">🎓 ADVANCED</div>
+            <div class="flex flex-wrap gap-1 md:gap-2">
+                <button onclick="playPattern('euclidean')" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Euclidean rhythms">
+                    EUCLIDEAN
+                </button>
+                <button onclick="playPattern('layered_bass')" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Bass with effects">
+                    BASS+
+                </button>
+                <button onclick="playPattern('arpeggio')" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Musical arpeggio">
+                    ARPEGGIO
+                </button>
+                <button onclick="playPattern('chord_progression')" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Chord changes">
+                    CHORDS
+                </button>
+                <button onclick="playPattern('polyrhythm')" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Multiple rhythms">
+                    POLYRHYTHM
+                </button>
+                <button onclick="playPattern('filter_envelope')" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Filter envelope">
+                    FILTER ENV
+                </button>
+                <button onclick="playPattern('sample_chopping')" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Sample chopping">
+                    CHOPPING
+                </button>
+                <button onclick="playPattern('stack_demo')" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Stack multiple parts">
+                    STACK
+                </button>
+                <button onclick="playPattern('effects_demo')" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Reverb and delay">
+                    EFFECTS
+                </button>
+                <button onclick="playPattern('complex_stack')" class="bg-purple-500 hover:bg-purple-600 text-white font-medium py-1 px-2 md:py-1.5 md:px-3 rounded text-xs md:text-sm transition-all duration-200 hover:scale-105 touch-manipulation" title="Full composition">
+                    COMPLEX
+                </button>
+            </div>
         </div>
     </div>
     
     <div class="flex-1">
-        <div id="helpText" class="text-gray-600 text-sm mb-4 hidden">Please hit Stop and then Play to initialize audio</div>
-        <div class="flex flex-wrap gap-2 mb-8">
-            <button onclick="playCurrentCode()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg">
-                PLAY
-            </button>
-            <button onclick="stopAll()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg">
-                STOP
-            </button>
-            <button onclick="playPattern('kick')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Four-on-the-floor kick pattern">
-                KICK
-            </button>
-            <button onclick="playPattern('snare')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Backbeat snare on 2 and 4">
-                SNARE
-            </button>
-            <button onclick="playPattern('hihat')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Steady hi-hat groove">
-                HI-HAT
-            </button>
-            <button onclick="playPattern('bass')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Deep filtered bass line">
-                BASS
-            </button>
-            <button onclick="playPattern('melody')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Simple ascending melody">
-                MELODY
-            </button>
-            <button onclick="playPattern('complex')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Layered bass, melody and drums">
-                COMPLEX
-            </button>
-            <button onclick="playPattern('ambient')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Spacey ambient texture">
-                AMBIENT
-            </button>
-            <button onclick="playPattern('arpeggio')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Filtered square wave arpeggio">
-                ARPEGGIO
-            </button>
-            <button onclick="playPattern('polyrhythm')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Complex polyrhythmic drums">
-                POLYRHYTHM
-            </button>
-            <button onclick="playPattern('chord')" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-2 px-4 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg" title="Simple piano chord progression">
-                CHORD
-            </button>
+        <!-- Play/Stop Controls Above Editor -->
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-2">
+            <div class="flex gap-2 sm:gap-4">
+                <button onclick="playCurrentCode()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 md:py-2 md:px-6 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg touch-manipulation">
+                    ▶ PLAY
+                </button>
+                <button onclick="stopAll()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 md:py-2 md:px-6 rounded text-sm transition-all duration-200 hover:scale-105 shadow-lg touch-manipulation">
+                    ⏹ STOP
+                </button>
+            </div>
+            <div id="helpText" class="text-gray-800 text-base sm:text-lg font-bold hidden">Please hit Stop and then Play to initialize audio</div>
         </div>
         
-        <div class="mb-8">
+        <div class="mb-4">
             <script src="https://unpkg.com/@strudel/repl@1.0.2"></script>
             <strudel-editor id="strudelEditor" class="w-full h-8 block rounded-lg overflow-hidden shadow-lg">
                 <!--
@@ -88,56 +135,104 @@ silence
         </div>
     </div>
     
-    <div id="messageLog" class="bg-gray-900 text-gray-500 p-4 rounded-lg h-16 overflow-y-auto font-mono text-xs mt-auto whitespace-pre-wrap">
+    <div id="messageLog" class="bg-gray-900 text-gray-500 p-3 md:p-4 rounded-lg h-16 md:h-20 overflow-y-auto font-mono text-xs md:text-sm mt-auto whitespace-pre-wrap">
         Sounds take about a minute to load...
     </div>
 
     <script>
-        // Pattern definitions with descriptions
+        // Educational pattern definitions - progressive learning from basic to advanced
         const patterns = {
-            kick: {
-                code: 's("bd bd bd bd")',
-                description: "Four-on-the-floor kick pattern"
+            // ELEMENTARY PATTERNS (10) - Learn the fundamentals
+            simple_note: {
+                code: 'note("c4")',
+                description: "Single note - the most basic sound"
             },
-            snare: {
-                code: 's("~ sd ~ sd")',
-                description: "Backbeat snare on 2 and 4"
+            simple_drum: {
+                code: 's("bd sd bd sd")',
+                description: "Basic drum pattern - kick and snare"
             },
-            hihat: {
-                code: 's("hh*4").gain(0.6)',
-                description: "Steady hi-hat groove"
+            rest_pattern: {
+                code: 's("bd ~ sd ~")',
+                description: "Using rests (~) to create rhythm and space"
             },
-            bass: {
-                code: 'note("c2 ~ eb2 ~ f2 ~ g2 ~").s("sawtooth").lpf(800)',
-                description: "Deep filtered bass line"
+            sequence: {
+                code: 'note("c d e f")',
+                description: "Playing notes in sequence"
             },
-            melody: {
-                code: 'note("c4 d4 e4 f4 g4 f4 e4 d4").s("triangle").slow(2)',
-                description: "Simple ascending melody"
+            parallel: {
+                code: 's("bd, hh*2")',
+                description: "Playing sounds together with comma"
             },
-            complex: {
-                code: `stack(
-  note("c2 eb2 g2 bb2").s("sawtooth").lpf(400).slow(2),
-  note("c4 d4 eb4 f4 g4 ab4 bb4 c5").s("triangle").gain(0.7),
-  s("bd ~ bd ~").fast(1.5)
-)`,
-                description: "Layered bass, melody and drums"
+            speed_control: {
+                code: 's("hh*4")',
+                description: "Speed things up with *4"
             },
-            ambient: {
-                code: 'note("c4 g4 e5 c5").s("sawtooth").slow(4).room(0.8).delay(0.5)',
-                description: "Spacey ambient texture"
+            sample_selection: {
+                code: 's("bd:0 bd:1 bd:2 bd:3")',
+                description: "Choosing different samples with :number"
+            },
+            basic_scale: {
+                code: 'n("0 2 4 7").scale("C:major").s("piano")',
+                description: "Using scales - C major triad"
+            },
+            volume_control: {
+                code: 's("bd sd").gain("0.8 0.4")',
+                description: "Control volume with .gain()"
+            },
+            simple_filter: {
+                code: 'note("c2 c3").s("sawtooth").lpf(800)',
+                description: "Basic low-pass filter with .lpf()"
+            },
+            
+            // ADVANCED PATTERNS (10) - Complex musical techniques
+            euclidean: {
+                code: 's("bd(3,8) sd(5,16) hh(13,16)").bank("RolandTR909")',
+                description: "🌀 Euclidean rhythms - distribute 3 kicks across 8 steps, etc."
+            },
+            layered_bass: {
+                code: 'note("c1 eb1 f1 g1").s("sawtooth").lpf(sine.range(200,800).slow(4)).lpenv(3).room(0.2)',
+                description: "🎸 Bass with dynamic filter modulation and reverb"
             },
             arpeggio: {
-                code: 'note("c4 e4 g4 c5 g4 e4").fast(2).s("square").lpf(sine.range(400, 2000))',
-                description: "Filtered square wave arpeggio"
+                code: '"c a f e".off(1/8, add(7)).off(1/4, add(12)).note().s("triangle").slow(2)',
+                description: "🎼 Musical arpeggio with .off() creating harmonic delays"
+            },
+            chord_progression: {
+                code: 'chord("<C^7 A7 Dm7 G7>").voicing().s("piano").room(0.4)',
+                description: "🎹 Jazz chord progression with proper voicings"
             },
             polyrhythm: {
-                code: 'stack(s("bd*3"), s("~ sd ~ sd ~ sd"), s("hh*8").gain(0.4))',
-                description: "Complex polyrhythmic drums"
+                code: 'stack(s("bd*3"), s("sd*5").late(1/8), s("hh*7").gain(0.3))',
+                description: "🥁 Multiple independent rhythms: 3/4 vs 5/4 vs 7/4 time"
             },
-            chord: {
-                code: 'note("<c4 e4 g4>").s("piano").slow(2).room(0.3)',
-                description: "Simple piano chord progression"
+            filter_envelope: {
+                code: 'note("c2 eb2 g2").s("sawtooth").lpf(400).lpa(0.1).lpd(0.2).lpenv(6).sometimes(add(note(12)))',
+                description: "🎛️ Dynamic filter with ADSR envelope modulation"
+            },
+            sample_chopping: {
+                code: 's("bd").chop(4).n("<0 2 1 3>")',
+                description: "Chopping samples into slices"
+            },
+            stack_demo: {
+                code: 'stack(s("bd ~ bd ~"), s("~ sd ~ sd"), s("hh*4").gain(0.5))',
+                description: "Stack multiple patterns together"
+            },
+            effects_demo: {
+                code: 'note("c4 g4 e4").s("triangle").room(0.5).delay(0.25)',
+                description: "Atmospheric sounds with reverb and delay"
+            },
+            complex_stack: {
+                code: `stack(
+  // Bass
+  note("c1 eb1 f1 g1").s("sawtooth").lpf(600).lpenv(4),
+  // Melody
+  n("0 2 4 <5 7>").scale("C4:minor").s("triangle").room(0.3),
+  // Arpeggios
+  "c5 eb5 g5".off(1/16, add(7)).note().s("square").gain(0.4),
+  // Drums
+  s("bd(3,8) sd(5,16) [~ hh]*8").bank("RolandTR909")
+).slow(2)`,
+                description: "🎼 Complete composition: bass + melody + arpeggios + drums"
             }
         };
 

@@ -116,7 +116,7 @@ def _validate_strudel_code(code: str) -> tuple[bool, str]:
         return False, f"Validation error: {str(e)}"
 
 @mcp.tool()
-async def play_code(session_id: str, code: str = 'note("c d e f g").s("piano").slow(2)', description: str = "") -> str:
+async def play_code(session_id: str, code: str = 'note("c d e f").s("piano").slow(2)', description: str = "") -> str:
     """
     Play live coding pattern in the connected browser
     
@@ -355,89 +355,6 @@ async def search_strudel_functions(query: str, limit: int = 10) -> str:
         logger.error(f"Error searching functions: {e}")
         return f"Error searching functions: {str(e)}"
 
-@mcp.tool()
-async def search_strudel_instruments(query: str, limit: int = 15) -> str:
-    """
-    Search for Strudel instrument samples by name or category.
-    
-    Args:
-        query: Search term (instrument name, category like 'percussion', 'piano', etc.)
-        limit: Maximum number of results to return (default 15)
-        
-    Returns:
-        Matching instrument samples with variations and usage examples
-    """
-    if not docs_system:
-        return "Documentation system not available."
-    
-    try:
-        return docs_system.search_instrument_samples(query, limit)
-    except Exception as e:
-        logger.error(f"Error searching instrument samples: {e}")
-        return f"Error searching instrument samples: {str(e)}"
-
-@mcp.tool()
-async def search_strudel_synths(query: str, limit: int = 10) -> str:
-    """
-    Search for Strudel synthesizers by name or category.
-    
-    Args:
-        query: Search term (synth name, category like 'waveform', 'noise', or keywords)
-        limit: Maximum number of results to return (default 10)
-        
-    Returns:
-        Matching synthesizers with descriptions and usage examples
-    """
-    if not docs_system:
-        return "Documentation system not available."
-    
-    try:
-        return docs_system.search_synths(query, limit)
-    except Exception as e:
-        logger.error(f"Error searching synthesizers: {e}")
-        return f"Error searching synthesizers: {str(e)}"
-
-@mcp.tool()
-async def search_strudel_gm_instruments(query: str, limit: int = 15) -> str:
-    """
-    Search for General MIDI instruments by name or category.
-    
-    Args:
-        query: Search term (instrument name, category like 'brass', 'strings', etc.)
-        limit: Maximum number of results to return (default 15)
-        
-    Returns:
-        Matching GM instruments with variations and usage examples
-    """
-    if not docs_system:
-        return "Documentation system not available."
-    
-    try:
-        return docs_system.search_gm_instruments(query, limit)
-    except Exception as e:
-        logger.error(f"Error searching GM instruments: {e}")
-        return f"Error searching GM instruments: {str(e)}"
-
-@mcp.tool()
-async def search_strudel_drum_machines(query: str, limit: int = 15) -> str:
-    """
-    Search for classic drum machine samples by name, machine model, or drum type.
-    
-    Args:
-        query: Search term (machine name like 'tr808', 'tr909', drum type like 'kick', 'snare')
-        limit: Maximum number of results to return (default 15)
-        
-    Returns:
-        Matching drum machine samples with variations and usage examples
-    """
-    if not docs_system:
-        return "Documentation system not available."
-    
-    try:
-        return docs_system.search_drum_machines(query, limit)
-    except Exception as e:
-        logger.error(f"Error searching drum machines: {e}")
-        return f"Error searching drum machines: {str(e)}"
 
 @mcp.tool()
 async def get_strudel_quick_reference() -> str:
@@ -450,9 +367,10 @@ async def get_strudel_quick_reference() -> str:
     return """# Strudel Quick Reference
 
 ## Basic Patterns
-- `s("bd sd hh cp")` - Play samples (bass drum, snare, hi-hat, clap)
-- `note("c d e f")` - Play notes
+- `note("c d e f")` - Play notes (C D E F)
 - `note("c3 e3 g3")` - Play chord (C major)
+- `note("<c d e f>")` - Sequence through notes
+- `s("bd sd hh")` - Basic drum samples (kick, snare, hihat)
 
 ## Timing
 - `.slow(2)` - Half speed
@@ -467,21 +385,17 @@ async def get_strudel_quick_reference() -> str:
 - `"a ~ b ~"` - Rests (~)
 
 ## Effects
-- `.gain(0.5)` - Volume
+- `.gain(0.5)` - Volume (0 to 1)
 - `.lpf(800)` - Low-pass filter
 - `.delay(0.3)` - Echo
-- `.room(0.5)` - Reverb
+- `.room(0.3)` - Reverb
 - `.pan(0.5)` - Stereo position
 
-## Synths
-- `.s("sawtooth")` - Waveform synth
-- `.s("piano")` - Piano sound
-- `.s("808")` - 808 drum machine
-
-## Examples
-- Kick: `s("bd ~ bd ~")`
-- Bass: `note("c2 ~ eb2 ~").s("sawtooth").lpf(400)`
-- Melody: `note("c4 d4 e4 f4").s("triangle")`
+## Basic Examples
+- Simple melody: `note("c d e f").s("piano").slow(2)`
+- Basic rhythm: `s("bd ~ sd ~")`
+- Chord progression: `note("<c3 f3 g3 c3>").s("piano")`
+- Layered pattern: `stack(note("c d e f").s("piano"), s("bd sd"))`
 """
 
 if __name__ == "__main__":

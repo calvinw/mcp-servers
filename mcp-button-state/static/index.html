@@ -59,6 +59,18 @@
                 </button>
             </div>
         </div>
+        
+        <!-- Sample Links for Web Scraping Demo -->
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h3 class="text-lg font-semibold mb-4">Sample Links:</h3>
+            <div class="space-y-2 text-sm">
+                <a href="https://github.com/microsoft/mcp" class="text-blue-600 hover:underline block">MCP Protocol on GitHub</a>
+                <a href="https://zustand.js.org/" class="text-blue-600 hover:underline block">Zustand Documentation</a>
+                <a href="https://fastapi.tiangolo.com/" class="text-blue-600 hover:underline block">FastAPI Framework</a>
+                <a href="https://websockets.readthedocs.io/" class="text-blue-600 hover:underline block">WebSockets Documentation</a>
+                <a href="/debug/connections" class="text-green-600 hover:underline block">Debug Connections</a>
+            </div>
+        </div>
     </div>
     
     <!-- Message Log -->
@@ -72,7 +84,16 @@
             isClicked: false,
             clickCount: 0,
             lastClickTime: null,
-            mode: 'normal' // 'normal' or 'excited'
+            mode: 'normal', // 'normal' or 'excited'
+            
+            // Web page metadata (updated dynamically)
+            pageData: {
+                title: document.title,
+                url: window.location.href,
+                content: '',
+                links: [],
+                timestamp: Date.now()
+            }
         };
         
         const stateListeners = [];
@@ -91,6 +112,20 @@
                 };
             }
         };
+        
+        // Function to capture current page data
+        function updatePageData() {
+            const pageData = {
+                title: document.title,
+                url: window.location.href,
+                content: document.body.innerText.substring(0, 500) + '...', // Truncate for brevity
+                links: Array.from(document.links).slice(0, 10).map(a => `${a.innerText.trim()}: ${a.href}`),
+                timestamp: Date.now()
+            };
+            
+            useStore.setState({ pageData });
+            return pageData;
+        }
         
         // Actions (Zustand-style)
         const actions = {
@@ -196,6 +231,9 @@
                     
                     if (data.type === 'get-button-state') {
                         // MCP server is requesting current state
+                        // First update page data to get fresh web content
+                        updatePageData();
+                        
                         const currentState = useStore.getState();
                         const response = {
                             type: 'button-state-response',
@@ -256,6 +294,7 @@
         // Initialize when page loads
         document.addEventListener('DOMContentLoaded', () => {
             addLogEntry(`Button interface ready (Session: ${sessionId})`);
+            updatePageData(); // Initialize page data
             updateStateDisplay();
             connectWebSocket();
         });

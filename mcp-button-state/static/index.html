@@ -229,21 +229,20 @@
                     const data = JSON.parse(event.data);
                     console.log('WebSocket received message:', data);
                     
-                    if (data.type === 'get-button-state') {
-                        // MCP server is requesting current state
+                    if (data.type === 'get-page-data') {
+                        // MCP server is requesting current page data
                         // First update page data to get fresh web content
-                        updatePageData();
+                        const pageData = updatePageData();
                         
-                        const currentState = useStore.getState();
                         const response = {
                             type: 'button-state-response',
                             request_id: data.request_id,
-                            state: currentState,
+                            state: pageData,
                             timestamp: Date.now()
                         };
                         
                         ws.send(JSON.stringify(response));
-                        addLogEntry(`Sent current state to MCP server (request: ${data.request_id})`);
+                        addLogEntry(`Sent page data to MCP server (request: ${data.request_id})`);
                         
                     } else if (data.type === 'ping') {
                         ws.send(JSON.stringify({type: 'pong'}));

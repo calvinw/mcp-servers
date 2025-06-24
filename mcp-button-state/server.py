@@ -36,17 +36,24 @@ def handle_state_response(request_id: str, state: Dict[str, Any]):
         logger.info(f"Resolved state request {request_id} with state: {state}")
 
 @mcp.tool()
-async def get_button_state(session_id: str = "") -> str:
+async def get_page_data(session_id: str) -> str:
     """
-    Get the current button state from the web interface via WebSocket.
+    Get the current page data from the web interface via WebSocket.
     
     Args:
-        session_id: Optional session ID to target specific browser connection
+        session_id: Required session ID to target specific browser connection
         
     Returns:
-        JSON string containing the current Zustand state from the web interface
+        JSON string containing page title, URL, content, and links from the web interface
     """
     global websocket_manager, pending_state_requests
+    
+    # Validate session_id is provided
+    if not session_id or session_id.strip() == "":
+        return json.dumps({
+            "error": "session_id is required",
+            "status": "invalid_input"
+        })
     
     if not websocket_manager:
         return json.dumps({
@@ -70,19 +77,21 @@ async def get_button_state(session_id: str = "") -> str:
     
     # Send request to get current state
     message = {
-        "type": "get-button-state",
+        "type": "get-page-data",
         "request_id": request_id,
         "timestamp": int(time.time() * 1000)
     }
     
     try:
-        # Broadcast the request to all connected clients (or specific session)
-        if session_id:
-            await websocket_manager.send_to_session(session_id, json.dumps(message))
-        else:
-            await websocket_manager.broadcast(json.dumps(message))
+        # Send the request to the specific session
+        success = await websocket_manager.send_to_session(session_id, json.dumps(message))
+        if not success:
+            return json.dumps({
+                "error": f"Session '{session_id}' not found or not connected",
+                "status": "session_not_found"
+            })
         
-        logger.info(f"Sent button state request {request_id}")
+        logger.info(f"Sent page data request {request_id}")
         
         # Wait for response with timeout
         try:
@@ -98,7 +107,7 @@ async def get_button_state(session_id: str = "") -> str:
             if request_id in pending_state_requests:
                 del pending_state_requests[request_id]
             return json.dumps({
-                "error": "Timeout waiting for state response from web interface",
+                "error": "Timeout waiting for page data response from web interface",
                 "status": "timeout",
                 "request_id": request_id
             })
@@ -107,9 +116,9 @@ async def get_button_state(session_id: str = "") -> str:
         # Clean up the pending request
         if request_id in pending_state_requests:
             del pending_state_requests[request_id]
-        logger.error(f"Error getting button state: {e}")
+        logger.error(f"Error getting page data: {e}")
         return json.dumps({
-            "error": f"Failed to get button state: {str(e)}",
+            "error": f"Failed to get page data: {str(e)}",
             "status": "error"
         })
 

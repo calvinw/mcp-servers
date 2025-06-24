@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WebSocket Test</title>
+</head>
+<body>
+    <h1>WebSocket Test</h1>
+    <div id="status">Connecting...</div>
+    <div id="messages"></div>
+
+    <script>
+        const ws = new WebSocket('ws://localhost:8001/ws?session_id=test123');
+        const status = document.getElementById('status');
+        const messages = document.getElementById('messages');
+
+        ws.onopen = function() {
+            status.textContent = 'Connected!';
+            messages.innerHTML += '<p>WebSocket connected</p>';
+        };
+
+        ws.onmessage = function(event) {
+            messages.innerHTML += '<p>Received: ' + event.data + '</p>';
+        };
+
+        ws.onerror = function(error) {
+            status.textContent = 'Error!';
+            messages.innerHTML += '<p>Error: ' + error + '</p>';
+        };
+
+        ws.onclose = function() {
+            status.textContent = 'Disconnected';
+            messages.innerHTML += '<p>WebSocket closed</p>';
+        };
+    </script>
+</body>
+</html>

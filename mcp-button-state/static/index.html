@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Button State Demo - MCP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-900 min-h-screen flex flex-col p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Button State Demo</h1>
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+                <div id="statusDot" class="w-3 h-3 rounded-full bg-red-500 animate-pulse"></div>
+                <span id="statusText" class="text-gray-700">Connecting to MCP server...</span>
+            </div>
+            <div class="bg-blue-50 border border-blue-200 rounded px-3 py-1">
+                <span class="text-sm font-mono text-blue-800" id="sessionId">
+                    Session: SESSION_ID_PLACEHOLDER
+                </span>
+            </div>
+        </div>
+    </div>
+    
+    <div class="flex-1 flex flex-col items-center justify-center gap-8">
+        <!-- Main Button -->
+        <div class="bg-white p-8 rounded-lg shadow-lg">
+            <button 
+                id="mainButton"
+                class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-8 rounded-lg text-xl transition-all duration-200 hover:scale-105 shadow-lg"
+            >
+                Click Me!
+            </button>
+        </div>
+        
+        <!-- State Display -->
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h2 class="text-lg font-semibold mb-4">Current Zustand State:</h2>
+            <pre id="stateDisplay" class="bg-gray-100 p-4 rounded text-sm overflow-auto">
+                Loading state...
+            </pre>
+        </div>
+        
+        <!-- Additional Controls -->
+        <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-md">
+            <h3 class="text-lg font-semibold mb-4">Additional Controls:</h3>
+            <div class="space-y-3">
+                <button 
+                    id="resetButton"
+                    class="w-full bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded transition-all"
+                >
+                    Reset State
+                </button>
+                <button 
+                    id="toggleModeButton"
+                    class="w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded transition-all"
+                >
+                    Toggle Mode
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Message Log -->
+    <div id="messageLog" class="bg-gray-900 text-gray-500 p-4 rounded-lg h-32 overflow-y-auto font-mono text-sm mt-6 whitespace-pre-wrap">
+        Initializing button state demo...
+    </div>
+
+    <script>
+        // Custom state management (Zustand-inspired)
+        let buttonState = {
+            isClicked: false,
+            clickCount: 0,
+            lastClickTime: null,
+            mode: 'normal' // 'normal' or 'excited'
+        };
+        
+        const stateListeners = [];
+        
+        const useStore = {
+            getState: () => buttonState,
+            setState: (newState) => {
+                buttonState = { ...buttonState, ...newState };
+                stateListeners.forEach(listener => listener());
+            },
+            subscribe: (listener) => {
+                stateListeners.push(listener);
+                return () => {
+                    const index = stateListeners.indexOf(listener);
+                    if (index > -1) stateListeners.splice(index, 1);
+                };
+            }
+        };
+        
+        // Actions (Zustand-style)
+        const actions = {
+            clickButton: () => {
+                useStore.setState({
+                    isClicked: !buttonState.isClicked,
+                    clickCount: buttonState.clickCount + 1,
+                    lastClickTime: Date.now()
+                });
+            },
+            
+            resetState: () => {
+                useStore.setState({
+                    isClicked: false,
+                    clickCount: 0,
+                    lastClickTime: null,
+                    mode: 'normal'
+                });
+            },
+            
+            toggleMode: () => {
+                useStore.setState({
+                    mode: buttonState.mode === 'normal' ? 'excited' : 'normal'
+                });
+            }
+        };
+
+        // WebSocket connection
+        let ws = null;
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const messageLog = document.getElementById('messageLog');
+        const stateDisplay = document.getElementById('stateDisplay');
+        const mainButton = document.getElementById('mainButton');
+        const resetButton = document.getElementById('resetButton');
+        const toggleModeButton = document.getElementById('toggleModeButton');
+
+        // Get session ID from the placeholder
+        const sessionId = document.getElementById('sessionId').textContent.replace('Session: ', '').trim();
+
+        function addLogEntry(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logLine = `[${timestamp}] ${message}\n`;
+            messageLog.textContent += logLine;
+            messageLog.scrollTop = messageLog.scrollHeight;
+            
+            // Keep only last 50 lines
+            const lines = messageLog.textContent.split('\n');
+            if (lines.length > 50) {
+                messageLog.textContent = lines.slice(-50).join('\n');
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            if (connected) {
+                statusDot.className = 'w-3 h-3 rounded-full bg-green-500';
+                statusText.textContent = 'Connected to MCP server';
+            } else {
+                statusDot.className = 'w-3 h-3 rounded-full bg-red-500 animate-pulse';
+                statusText.textContent = 'Disconnected from MCP server';
+            }
+        }
+
+        function updateStateDisplay() {
+            const state = useStore.getState();
+            stateDisplay.textContent = JSON.stringify(state, null, 2);
+            
+            // Update button appearance based on state
+            if (state.isClicked) {
+                mainButton.className = 'bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-8 rounded-lg text-xl transition-all duration-200 hover:scale-105 shadow-lg';
+                mainButton.textContent = `Clicked! (${state.clickCount})`;
+            } else {
+                mainButton.className = 'bg-blue-500 hover:bg-blue-600 text-white font-bold py-4 px-8 rounded-lg text-xl transition-all duration-200 hover:scale-105 shadow-lg';
+                mainButton.textContent = 'Click Me!';
+            }
+            
+            // Update button style based on mode
+            if (state.mode === 'excited') {
+                mainButton.style.animation = 'pulse 1s infinite';
+            } else {
+                mainButton.style.animation = '';
+            }
+        }
+
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws?session_id=${sessionId}`;
+            
+            console.log('Connecting WebSocket with sessionId:', sessionId);
+            console.log('WebSocket URL:', wsUrl);
+            
+            ws = new WebSocket(wsUrl);
+            
+            ws.onopen = function() {
+                updateConnectionStatus(true);
+                addLogEntry('WebSocket connected to MCP server');
+            };
+            
+            ws.onmessage = async function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('WebSocket received message:', data);
+                    
+                    if (data.type === 'get-button-state') {
+                        // MCP server is requesting current state
+                        const currentState = useStore.getState();
+                        const response = {
+                            type: 'button-state-response',
+                            request_id: data.request_id,
+                            state: currentState,
+                            timestamp: Date.now()
+                        };
+                        
+                        ws.send(JSON.stringify(response));
+                        addLogEntry(`Sent current state to MCP server (request: ${data.request_id})`);
+                        
+                    } else if (data.type === 'ping') {
+                        ws.send(JSON.stringify({type: 'pong'}));
+                        
+                    } else {
+                        addLogEntry(`Unknown message type: ${data.type}`);
+                    }
+                    
+                } catch (error) {
+                    console.error('WebSocket message error:', error);
+                    addLogEntry(`Message parse error: ${error.message}`);
+                }
+            };
+            
+            ws.onclose = function() {
+                updateConnectionStatus(false);
+                addLogEntry('WebSocket disconnected, attempting to reconnect...');
+                setTimeout(connectWebSocket, 3000);
+            };
+            
+            ws.onerror = function(error) {
+                console.error('WebSocket error:', error);
+                addLogEntry('WebSocket connection error');
+            };
+        }
+
+        // Event listeners
+        mainButton.addEventListener('click', () => {
+            actions.clickButton();
+            addLogEntry('Main button clicked');
+        });
+
+        resetButton.addEventListener('click', () => {
+            actions.resetState();
+            addLogEntry('State reset');
+        });
+
+        toggleModeButton.addEventListener('click', () => {
+            actions.toggleMode();
+            addLogEntry(`Mode toggled to: ${useStore.getState().mode}`);
+        });
+
+        // Subscribe to store changes
+        useStore.subscribe(() => {
+            updateStateDisplay();
+        });
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            addLogEntry(`Button interface ready (Session: ${sessionId})`);
+            updateStateDisplay();
+            connectWebSocket();
+        });
+
+        console.log('Button State Demo initialized!');
+    </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+[project]
+name = "mcp-button-state"
+version = "0.1.0"
+description = "Simple MCP server with button state management via Zustand and WebSocket"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "chainlit-mcp-client @ git+https://github.com/calvinw/chainlit-mcp-client",
+    "uvicorn",
+    "fastmcp",
+    "fastapi",
+    "websockets"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["server", "sse_server"]

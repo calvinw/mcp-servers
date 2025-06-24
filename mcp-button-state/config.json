@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "mcp-button-state": {
+      "command": "uv",
+      "args": ["run", "python", "server.py"],
+      "cwd": "/home/calvinw/develop/mcp-servers/mcp-button-state"
+    }
+  }
+}

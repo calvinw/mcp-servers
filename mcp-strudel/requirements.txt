@@ -1,6 +1,0 @@
-fastmcp
-fastapi
-requests
-argparse
-uvicorn[standard]
-websockets

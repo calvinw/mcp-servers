@@ -5,7 +5,8 @@ description = "This is a simple greet MCP"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "chainlit-mcp-client @ git+https://github.com/calvinw/chainlit-mcp-client",
+    "openai",
+    "chainlit",
     "uvicorn",
     "fastmcp",
     "fastapi"

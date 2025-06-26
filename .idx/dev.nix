@@ -1,4 +1,4 @@
-# To learn more about how to use Nix to configure your environment
+#      To learn more about how to use Nix to configure your environment
 # see: https://firebase.google.com/docs/studio/customize-workspace
 { pkgs, ... }: {
   # Which nixpkgs channel to use.
@@ -12,8 +12,9 @@
     pkgs.uv
     pkgs.dolt
     pkgs.pspg
+    pkgs.git
     
-    # Core browser dependencies - comprehensive set based on research
+    # Core browser dependencies - comprehensive set based on researc
     pkgs.chromium
     pkgs.glib
     pkgs.nspr
@@ -56,15 +57,13 @@
     pkgs.libxkbcommon
     pkgs.libGL
     pkgs.shared-mime-info
-    
-    # Additional libraries commonly needed by Chromium
     pkgs.libuuid
     pkgs.libsecret
     pkgs.libappindicator-gtk3
     pkgs.liberation_ttf
   ];
   
-  # Enable nix-ld for running unpatched binaries
+  # Enable nix-ld for running unpatched bina
   env = {
     # Core nix-ld setup
     NIX_LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath [
@@ -132,8 +131,9 @@
     XDG_RUNTIME_DIR = "/tmp";
   };
   
+  # Firebase Studio IDE configuration
   idx = {
-    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
+    # Search for extensions on https://open-vsx.org/ and use "publisher.id"
     extensions = [
       # "vscodevim.vim"
     ];
@@ -141,32 +141,29 @@
     previews = {
       enable = true;
       previews = {
-         web = {
-           # Example: run "npm run dev" with PORT set to IDX's defined port for previews,
-           # and show it in IDX's web preview panel
-           command = ["sh" "-c" "mcp-greet/run_chainlit.sh"];
-           manager = "web";
-           env = {
-             # Environment variables to set for your server
-             PORT = "$PORT";
-           };
-         };
+        web = {
+          # --- CORRECTED COMMAND ---
+          # This command now changes to the correct mcp-greet directory before running the
+          # chainlit server, ensuring it runs in the correct context.
+          command = ["sh" "-c" "cd /home/user/mcp-servers/mcp-greet && ./run_chainlit.sh"];
+          manager = "web";
+          env = {
+            PORT = "$PORT";
+          };
+        };
       };
     };
     # Workspace lifecycle hooks
     workspace = {
       # Runs when a workspace is first created
       onCreate = {
-        # Example: install JS dependencies from NPM
-        # npm-install = "npm install";
-        # Open editors for the following files by default, if they exist:
-        # default.openFiles = [ ];
       };
-      # Runs when the workspace is (re)started
+      # Runs every time you start your workspace
       onStart = {
-        # Example: start a background task to watch and re-build backend code
-        # watch-backend = "npm run watch-backend";
+        install-deps = ''
+        '';
       };
     };
   };
 }
+

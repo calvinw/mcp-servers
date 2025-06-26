@@ -25,4 +25,4 @@ This project is an example of an MCP server.
     A deployed version is here:
     Type: SSE  
     Name: mcp-greet  
-    ServerURL: https://mcp-greet-121045565852.us-central1.run.app/sse
+    ServerURL: https://mcp-greet.mcp.mathplosion.com/

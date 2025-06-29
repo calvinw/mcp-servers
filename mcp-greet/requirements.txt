@@ -1,7 +1,0 @@
-openai
-chainlit
-fastmcp
-fastapi
-uvicorn
-requests
-argparse

@@ -145,7 +145,7 @@
           # --- CORRECTED COMMAND ---
           # This command now changes to the correct mcp-greet directory before running the
           # chainlit server, ensuring it runs in the correct context.
-          command = ["sh" "-c" "cd /home/user/mcp-servers/mcp-greet && ./run_chainlit.sh"];
+          command = ["sh" "-c" "cd /home/user/mcp-servers && ./run_chainlit.sh"];
           manager = "web";
           env = {
             PORT = "$PORT";

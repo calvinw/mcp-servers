@@ -1,17 +1,19 @@
-# Use Python 3.11 slim image
-FROM python:3.11-slim
+# Use Python 3.13 slim image
+FROM python:3.13-slim
 
 # Set working directory
 WORKDIR /app
 
-# Copy requirements file
-COPY requirements.txt .
+# Install uv
+RUN pip install uv
+
+# Copy project files
+COPY pyproject.toml uv.lock ./
 
 # Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv sync --frozen
 
 # Copy server code
-COPY sse_server.py .
 COPY server.py .
 
 # Expose port 8080 (Cloud Run default)
@@ -21,4 +23,4 @@ EXPOSE 8080
 ENV PORT=8080
 
 # Run the server
-CMD ["python", "sse_server.py"]
+CMD ["uv", "run", "python", "server.py"]

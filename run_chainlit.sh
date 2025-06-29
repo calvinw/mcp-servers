@@ -23,5 +23,4 @@ if [ ! -f ".chainlit/config.toml" ]; then
     wget --clobber https://raw.githubusercontent.com/calvinw/chainlit-mcp-client/refs/heads/main/chainlit_mcp_client/.chainlit/config.toml -O .chainlit/config.toml
 fi
 
-uv sync
-uv run chainlit run -w app.py --host 0.0.0.0 --port "$PORT"
+uv run --with chainlit --with python-dotenv --with openai chainlit run -w app.py --host 0.0.0.0 --port "$PORT"

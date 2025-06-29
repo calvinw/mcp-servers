@@ -11,15 +11,15 @@ This project is an example of an MCP server.
     ```
 
 2.  **Run the project as local MCP (STDIO).**
-    The project can be run as local MCP using server.py:
+    The project can be run as local MCP using server.py with stdio argument:
     ```bash
-    uv run python server.py
+    uv run python server.py stdio
     ```
 
-3.  **Run the project as remote MCP (SSE).*
-    The project can be run as a remote MCP using sse_server.py:
+3.  **Run the project as remote MCP (SSE).**
+    The project can be run as a remote MCP using server.py (defaults to SSE mode):
     ```bash
-    uv run python sse_server.py
+    uv run python server.py
     ```
 
     A deployed version is here:

@@ -14,4 +14,3 @@ __pycache__
 README.md
 .env
 .DS_Store
-uv.lock

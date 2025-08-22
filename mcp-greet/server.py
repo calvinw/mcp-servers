@@ -47,7 +47,7 @@ async def oauth_metadata(request: Request):
 http_app = mcp.http_app(transport="http", path='/mcp')
 
 # Create a FastAPI app and mount the MCP server
-app = FastAPI(lifespan=http_app.lifespan)
+app = FastAPI(redirect_slashes=False, lifespan=http_app.lifespan)
 
 # Add CORS middleware
 app.add_middleware(
@@ -59,8 +59,38 @@ app.add_middleware(
     max_age=86400  # Access-Control-Max-Age (in seconds)
 )
 
-# Add the OAuth metadata route before mounting
-app.add_api_route("/.well-known/oauth-authorization-server", oauth_metadata, methods=["GET"])
+# # Add the OAuth metadata route before mounting
+# app.add_api_route("/.well-known/oauth-authorization-server", oauth_metadata, methods=["GET"])
+#
+
+# OAuth metadata endpoints for Claude.ai compatibility
+@app.get("/.well-known/oauth-authorization-server")
+async def oauth_metadata(request: Request):
+    base_url = str(request.base_url).rstrip("/")
+    return JSONResponse({
+        "issuer": base_url
+    })
+
+@app.get("/.well-known/oauth-authorization-server/mcp")
+async def oauth_metadata_mcp(request: Request):
+    base_url = str(request.base_url).rstrip("/")
+    return JSONResponse({
+        "issuer": base_url
+    })
+
+@app.get("/.well-known/oauth-protected-resource")
+async def oauth_protected_resource(request: Request):
+    base_url = str(request.base_url).rstrip("/")
+    return JSONResponse({
+        "resource": base_url
+    })
+
+@app.get("/.well-known/oauth-protected-resource/mcp")
+async def oauth_protected_resource_mcp(request: Request):
+    base_url = str(request.base_url).rstrip("/")
+    return JSONResponse({
+        "resource": base_url
+    })
 
 # Mount the MCP server
 app.mount("/", http_app)

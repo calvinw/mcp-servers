@@ -44,7 +44,7 @@ async def oauth_metadata(request: Request):
     })
 
 # Create the ASGI app for SSE transport
-http_app = mcp.http_app(transport="sse", path='/sse')
+http_app = mcp.http_app(transport="http", path='/mcp')
 
 # Create a FastAPI app and mount the MCP server
 app = FastAPI(lifespan=http_app.lifespan)
@@ -74,5 +74,5 @@ if __name__ == "__main__":
         mcp.run()
     else:  # sse
         port = int(os.environ.get("PORT", 8080))
-        print(f"Greet Service - MCP endpoint: http://localhost:{port}/sse")
+        print(f"Greet Service - MCP endpoint: http://localhost:{port}/mcp")
         uvicorn.run("server:app", host="0.0.0.0", port=port, reload=True)

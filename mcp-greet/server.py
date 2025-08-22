@@ -1,9 +1,6 @@
 import os
 import sys
 from fastmcp import FastMCP
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 
 # Create MCP server
@@ -36,73 +33,17 @@ def get_some_sample_markdown() -> str:
     | Cell 3   | Cell 4   |
     """
 
-# Minimal OAuth endpoint (just enough for Claude.ai)
-async def oauth_metadata(request: Request):
-    base_url = str(request.base_url).rstrip("/")
-    return JSONResponse({
-        "issuer": base_url
-    })
-
-# Create the ASGI app for SSE transport
-http_app = mcp.http_app(transport="http", path='/mcp')
-
-# Create a FastAPI app and mount the MCP server
-app = FastAPI(redirect_slashes=False, lifespan=http_app.lifespan)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Access-Control-Allow-Origin
-    allow_methods=["GET", "POST", "OPTIONS"],  # Access-Control-Allow-Methods
-    allow_headers=["Content-Type", "Authorization", "x-api-key"],  # Access-Control-Allow-Headers
-    expose_headers=["Content-Type", "Authorization", "x-api-key"],  # Access-Control-Expose-Headers
-    max_age=86400  # Access-Control-Max-Age (in seconds)
-)
-
-# # Add the OAuth metadata route before mounting
-# app.add_api_route("/.well-known/oauth-authorization-server", oauth_metadata, methods=["GET"])
-#
-
-# OAuth metadata endpoints for Claude.ai compatibility
-@app.get("/.well-known/oauth-authorization-server")
-async def oauth_metadata(request: Request):
-    base_url = str(request.base_url).rstrip("/")
-    return JSONResponse({
-        "issuer": base_url
-    })
-
-@app.get("/.well-known/oauth-authorization-server/mcp")
-async def oauth_metadata_mcp(request: Request):
-    base_url = str(request.base_url).rstrip("/")
-    return JSONResponse({
-        "issuer": base_url
-    })
-
-@app.get("/.well-known/oauth-protected-resource")
-async def oauth_protected_resource(request: Request):
-    base_url = str(request.base_url).rstrip("/")
-    return JSONResponse({
-        "resource": base_url
-    })
-
-@app.get("/.well-known/oauth-protected-resource/mcp")
-async def oauth_protected_resource_mcp(request: Request):
-    base_url = str(request.base_url).rstrip("/")
-    return JSONResponse({
-        "resource": base_url
-    })
-
-# Mount the MCP server
-app.mount("/", http_app)
-
 if __name__ == "__main__":
     # Check command line argument for transport type
-    transport = sys.argv[1] if len(sys.argv) > 1 else "sse"
+    transport = sys.argv[1] if len(sys.argv) > 1 else "http"
     
     if transport == "stdio":
         print("Greet Service - Running as MCP server (stdio)")
         mcp.run()
-    else:  # sse
+    else:  # http
         port = int(os.environ.get("PORT", 8080))
         print(f"Greet Service - MCP endpoint: http://localhost:{port}/mcp")
-        uvicorn.run("server:app", host="0.0.0.0", port=port, reload=True)
+        
+        # Create the HTTP app
+        http_app = mcp.http_app(transport="http", path="/mcp")
+        uvicorn.run(http_app, host="0.0.0.0", port=port)

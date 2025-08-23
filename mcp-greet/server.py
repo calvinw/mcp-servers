@@ -53,8 +53,20 @@ app.add_api_route(
     methods=["GET"],
 )
 
+app.add_api_route(
+    "/.well-known/oauth-authorization-server/mcp",
+    oauth_metadata,
+    methods=["GET"],
+)
+
+app.add_api_route(
+    "/.well-known/oauth-authorization-server/mcp/",
+    oauth_metadata,
+    methods=["GET"],
+)
+
 # ---- Add PRM (authless) and DCR stub BEFORE mounting ----
-def prm_scoped(request: Request):
+async def prm_scoped(request: Request):
     return JSONResponse({
         "resource": _resource_id(request),
         "bearer_methods_supported": [],  # authless: no bearer methods
@@ -62,21 +74,23 @@ def prm_scoped(request: Request):
         # omit "authorization_servers" to signal no OAuth for this resource
     })
 
-def prm_root(request: Request):
+async def prm_root(request: Request):
     return JSONResponse({
         "resource": _public_base(request),
         "bearer_methods_supported": [],
         "scopes_supported": [],
     })
 
-def dcr_noop():
+async def dcr_noop():
     return Response(status_code=204)
 
 # PRM at both with/without trailing slash
+app.add_api_route("/.well-known/oauth-protected-resource/mcp/", prm_scoped, methods=["GET"])
 app.add_api_route("/.well-known/oauth-protected-resource/mcp", prm_scoped, methods=["GET"])
 app.add_api_route("/.well-known/oauth-protected-resource/mcp/", prm_scoped, methods=["GET"])
 # Optional host-level PRM
 app.add_api_route("/.well-known/oauth-protected-resource", prm_root, methods=["GET"])
+
 # No-op dynamic client registration
 app.add_api_route("/register", dcr_noop, methods=["POST"])
 

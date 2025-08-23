@@ -30,10 +30,12 @@ def ping(msg: str = "hello") -> str:
 
 # Serve MCP at /mcp/ (trailing slash helps avoid proxy 307s)
 inner = mcp.http_app(path="/mcp/")
+lifespan = inner.lifespan
+
 inner = PathAlias(inner, {"/mcp": "/mcp/"})   # <<< single-line fixv
 
 # ---- Outer FastAPI ----
-app = FastAPI(lifespan=inner.lifespan, title="Authless FastMCP")
+app = FastAPI(lifespan=lifespan, title="Authless FastMCP")
 app.router.redirect_slashes = False
 
 # Apply CORS to the mounted inner app

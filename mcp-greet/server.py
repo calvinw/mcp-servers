@@ -60,7 +60,8 @@ def _resource_id(request: Request) -> str:
 # ---- Your existing OAS metadata (kept exactly, added before mount) ----
 async def oauth_metadata(request: Request):
     base_url = str(request.base_url).rstrip("/")
-    return JSONResponse({"issuer": base_url})
+    #return JSONResponse({"issuer": base_url})
+    return Response(status_code=404) 
 
 app.add_api_route(
     "/.well-known/oauth-authorization-server",

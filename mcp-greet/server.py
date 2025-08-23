@@ -5,6 +5,18 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastmcp import FastMCP
 
+class PathAlias:
+    def __init__(self, app, aliases: dict[str, str]):
+        self.app = app
+        self.aliases = aliases
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") in ("http", "websocket"):
+            path = scope.get("path", "")
+            if path in self.aliases:
+                scope = dict(scope)
+                scope["path"] = self.aliases[path]
+        return await self.app(scope, receive, send)
+
 # ---- MCP server + tools ----
 mcp = FastMCP("Authless Demo")
 
@@ -18,6 +30,7 @@ def ping(msg: str = "hello") -> str:
 
 # Serve MCP at /mcp/ (trailing slash helps avoid proxy 307s)
 inner = mcp.http_app(path="/mcp/")
+inner = PathAlias(inner, {"/mcp": "/mcp/"})   # <<< single-line fixv
 
 # ---- Outer FastAPI ----
 app = FastAPI(lifespan=inner.lifespan, title="Authless FastMCP")
@@ -87,7 +100,7 @@ async def dcr_noop():
 # PRM at both with/without trailing slash
 app.add_api_route("/.well-known/oauth-protected-resource/mcp/", prm_scoped, methods=["GET"])
 app.add_api_route("/.well-known/oauth-protected-resource/mcp", prm_scoped, methods=["GET"])
-app.add_api_route("/.well-known/oauth-protected-resource/mcp/", prm_scoped, methods=["GET"])
+
 # Optional host-level PRM
 app.add_api_route("/.well-known/oauth-protected-resource", prm_root, methods=["GET"])
 

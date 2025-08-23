@@ -1,6 +1,6 @@
 # server.py
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI,Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse  # <-- fixes NameError
 from fastmcp import FastMCP

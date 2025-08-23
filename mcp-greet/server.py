@@ -1,11 +1,11 @@
 # server.py
 import uvicorn
-from fastapi import FastAPI,Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse  # <-- fixes NameError
+from fastapi.responses import JSONResponse
 from fastmcp import FastMCP
 
-# 1) Create MCP server and tools
+# ---- MCP server + tools ----
 mcp = FastMCP("Authless Demo")
 
 @mcp.tool()
@@ -16,42 +16,77 @@ def add_numbers(a: float, b: float) -> dict:
 def ping(msg: str = "hello") -> str:
     return f"pong: {msg}"
 
-# 2) Build inner ASGI app that exposes MCP at /mcp (no trailing slash)
-inner = mcp.http_app(path="/mcp")  # choose "/mcp/" only if you will ALWAYS use a trailing slash
+# Serve MCP at /mcp/ (trailing slash helps avoid proxy 307s)
+inner = mcp.http_app(path="/mcp/")
 
-# 3) OUTER FastAPI owns lifespan of the inner MCP app
+# ---- Outer FastAPI ----
 app = FastAPI(lifespan=inner.lifespan, title="Authless FastMCP")
-
-# IMPORTANT: turn off slash redirects to avoid 307 between /mcp and /mcp/
 app.router.redirect_slashes = False
 
-# 4) Apply CORS to the *mounted* app (outer middleware won't apply to mounted apps)
+# Apply CORS to the mounted inner app
 inner_with_cors = CORSMiddleware(
     inner,
-    allow_origins=["*"],  # authless; lock down if you want later
+    allow_origins=["*"],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# ---- Helpers for PRM ----
+def _public_base(request: Request) -> str:
+    proto = request.headers.get("x-forwarded-proto") or request.url.scheme
+    host  = request.headers.get("x-forwarded-host") or request.headers.get("host") or request.url.netloc
+    return f"{proto}://{host}"
+
+def _resource_id(request: Request) -> str:
+    # MUST match your MCP endpoint exactly; we chose /mcp/
+    return f"{_public_base(request)}/mcp/"
+
+# ---- Your existing OAS metadata (kept exactly, added before mount) ----
 async def oauth_metadata(request: Request):
     base_url = str(request.base_url).rstrip("/")
+    return JSONResponse({"issuer": base_url})
+
+app.add_api_route(
+    "/.well-known/oauth-authorization-server",
+    oauth_metadata,
+    methods=["GET"],
+)
+
+# ---- Add PRM (authless) and DCR stub BEFORE mounting ----
+def prm_scoped(request: Request):
     return JSONResponse({
-        "issuer": base_url
+        "resource": _resource_id(request),
+        "bearer_methods_supported": [],  # authless: no bearer methods
+        "scopes_supported": [],
+        # omit "authorization_servers" to signal no OAuth for this resource
     })
 
-# Add the OAuth metadata route before mounting
-app.add_api_route("/.well-known/oauth-authorization-server", oauth_metadata, methods=["GET"])
+def prm_root(request: Request):
+    return JSONResponse({
+        "resource": _public_base(request),
+        "bearer_methods_supported": [],
+        "scopes_supported": [],
+    })
 
-# 5) Mount the MCP app at root so the final path is exactly /mcp
+def dcr_noop():
+    return Response(status_code=204)
+
+# PRM at both with/without trailing slash
+app.add_api_route("/.well-known/oauth-protected-resource/mcp", prm_scoped, methods=["GET"])
+app.add_api_route("/.well-known/oauth-protected-resource/mcp/", prm_scoped, methods=["GET"])
+# Optional host-level PRM
+app.add_api_route("/.well-known/oauth-protected-resource", prm_root, methods=["GET"])
+# No-op dynamic client registration
+app.add_api_route("/register", dcr_noop, methods=["POST"])
+
+# ---- Mount MCP app last so final path is exactly /mcp/ ----
 app.mount("/", inner_with_cors)
 
-# Optional: health check
+# Health (optional)
 @app.get("/healthz")
 def health():
     return {"ok": True, "server": "Authless FastMCP"}
 
 if __name__ == "__main__":
-    # 0.0.0.0 so containers/VMs expose it; change port as needed
     uvicorn.run(app, host="0.0.0.0", port=8080)
-

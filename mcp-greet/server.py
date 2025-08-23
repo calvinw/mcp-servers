@@ -1,40 +1,31 @@
-import os
-import sys
-from fastmcp import FastMCP
+# server.py
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastmcp import FastMCP
 import uvicorn
 
-# Create MCP server
-mcp = FastMCP("MyGreetServer")
+mcp = FastMCP("Authless Demo")
 
 @mcp.tool()
-def add_numbers(a: float = 10.0, b: float = 5.0) -> dict:
-    """Add two numbers"""
+def add_numbers(a: float, b: float) -> dict:
     return {"a": a, "b": b, "result": a + b}
 
 @mcp.tool()
-def greet(name: str = "Calvin") -> str:
-    """Greet someone by name."""
-    return f"Hello, {name}! Nice to meet you."
-    
-@mcp.tool()
-def get_some_sample_markdown() -> str:
-    """Some sample markdown."""
-    return f"""
-    This is *Italic*   
-    This is **Bold**  
-    This is some LaTeX $x=434$  
+def ping(msg: str = "hello") -> str:
+    return f"pong: {msg}"
 
-    - First 
-    - Second 
+# Make an ASGI app that serves MCP at /mcp  (you can also choose "/mcp/")
+mcp_app = mcp.http_app(path="/mcp")   # <- IMPORTANT
 
-    | Header 1 | Header 2 |
-    |----------|----------|
-    | Cell 1   | Cell 2   |
-    | Cell 3   | Cell 4   |
-    """
+# Your outer FastAPI app; adopt the MCP app's lifespan
+app = FastAPI(lifespan=mcp_app.lifespan, title="Authless FastMCP")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Minimal OAuth endpoint (just enough for Claude.ai)
 async def oauth_metadata(request: Request):
@@ -43,36 +34,17 @@ async def oauth_metadata(request: Request):
         "issuer": base_url
     })
 
-# Create the ASGI app for SSE transport
-http_app = mcp.http_app(transport="sse", path='/sse')
-
-# Create a FastAPI app and mount the MCP server
-app = FastAPI(lifespan=http_app.lifespan)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Access-Control-Allow-Origin
-    allow_methods=["GET", "POST", "OPTIONS"],  # Access-Control-Allow-Methods
-    allow_headers=["Content-Type", "Authorization", "x-api-key"],  # Access-Control-Allow-Headers
-    expose_headers=["Content-Type", "Authorization", "x-api-key"],  # Access-Control-Expose-Headers
-    max_age=86400  # Access-Control-Max-Age (in seconds)
-)
-
 # Add the OAuth metadata route before mounting
 app.add_api_route("/.well-known/oauth-authorization-server", oauth_metadata, methods=["GET"])
 
-# Mount the MCP server
-app.mount("/", http_app)
+# Mount the MCP app at root so its path is exactly /mcp
+app.mount("/", mcp_app)
+
+# Optional extra routes on the outer app are fine:
+@app.get("/healthz")
+def health():
+    return {"ok": True}
 
 if __name__ == "__main__":
-    # Check command line argument for transport type
-    transport = sys.argv[1] if len(sys.argv) > 1 else "sse"
-    
-    if transport == "stdio":
-        print("Greet Service - Running as MCP server (stdio)")
-        mcp.run()
-    else:  # sse
-        port = int(os.environ.get("PORT", 8080))
-        print(f"Greet Service - MCP endpoint: http://localhost:{port}/sse")
-        uvicorn.run("server:app", host="0.0.0.0", port=port, reload=True)
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+

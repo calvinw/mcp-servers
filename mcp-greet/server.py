@@ -34,6 +34,15 @@ inner_with_cors = CORSMiddleware(
     allow_headers=["*"],
 )
 
+async def oauth_metadata(request: Request):
+    base_url = str(request.base_url).rstrip("/")
+    return JSONResponse({
+        "issuer": base_url
+    })
+
+# Add the OAuth metadata route before mounting
+app.add_api_route("/.well-known/oauth-authorization-server", oauth_metadata, methods=["GET"])
+
 # 5) Mount the MCP app at root so the final path is exactly /mcp
 app.mount("/", inner_with_cors)
 
@@ -41,17 +50,6 @@ app.mount("/", inner_with_cors)
 @app.get("/healthz")
 def health():
     return {"ok": True, "server": "Authless FastMCP"}
-
-# Optional: if you keep an OAuth metadata endpoint around, this fixes your JSONResponse error
-@app.get("/.well-known/oauth-authorization-server")
-def oauth_metadata():
-    # For authless you don't need real OAuth; safe to delete this route.
-    return JSONResponse({
-        "issuer": "https://your-domain.example",
-        "authorization_endpoint": "https://example.invalid/noop",
-        "token_endpoint": "https://example.invalid/noop",
-        "scopes_supported": []
-    })
 
 if __name__ == "__main__":
     # 0.0.0.0 so containers/VMs expose it; change port as needed
